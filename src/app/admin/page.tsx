@@ -16,7 +16,7 @@ import {
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
-type Tab = 'overview' | 'services' | 'users' | 'orders';
+type Tab = 'overview' | 'services' | 'users' | 'orders' | 'deposits';
 
 export default function AdminPage() {
   const { user, isAdmin, logout, loading: authLoading } = useAuth();
@@ -26,7 +26,11 @@ export default function AdminPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [depositRequests, setDepositRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Lightbox Modal for screenshot preview
+  const [activeScreenshot, setActiveScreenshot] = useState<string | null>(null);
 
   // Service Modal
   const [showServiceModal, setShowServiceModal] = useState(false);
@@ -52,10 +56,17 @@ export default function AdminPage() {
 
   const loadData = async () => {
     setLoading(true);
-    const [svcs, usrs, txs] = await Promise.all([getServices(), getAllUsers(), getAllTransactions()]);
+    const { getDepositRequests } = await import('@/lib/firestore');
+    const [svcs, usrs, txs, deps] = await Promise.all([
+      getServices(), 
+      getAllUsers(), 
+      getAllTransactions(),
+      getDepositRequests()
+    ]);
     setServices(svcs);
     setUsers(usrs.filter(u => u.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL));
     setTransactions(txs);
+    setDepositRequests(deps);
     setLoading(false);
   };
 
@@ -120,6 +131,30 @@ export default function AdminPage() {
     finally { setBalanceSaving(false); }
   };
 
+  // ---- Deposit Approvals ----
+  const handleApproveDeposit = async (reqId: string, userId: string, amount: number, email: string) => {
+    try {
+      const { approveDepositRequest } = await import('@/lib/firestore');
+      await approveDepositRequest(reqId, userId, amount, email);
+      toast.success('تم قبول طلب الشحن وإضافة الرصيد للعميل بنجاح ✅');
+      await loadData();
+    } catch {
+      toast.error('حدث خطأ أثناء قبول الطلب');
+    }
+  };
+
+  const handleRejectDeposit = async (reqId: string) => {
+    if (!confirm('هل تريد رفض طلب شحن الرصيد هذا؟')) return;
+    try {
+      const { rejectDepositRequest } = await import('@/lib/firestore');
+      await rejectDepositRequest(reqId);
+      toast.error('تم رفض طلب الشحن ❌');
+      await loadData();
+    } catch {
+      toast.error('حدث خطأ أثناء رفض الطلب');
+    }
+  };
+
   // ---- Order Status Update ----
   const handleUpdateStatus = async (txId: string, status: 'pending' | 'in_progress' | 'completed') => {
     try {
@@ -151,6 +186,7 @@ export default function AdminPage() {
           { id: 'services', icon: <Package size={18} />, label: 'الخدمات' },
           { id: 'users', icon: <Users size={18} />, label: 'المستخدمون' },
           { id: 'orders', icon: <Wallet size={18} />, label: 'طلبات الخدمات' },
+          { id: 'deposits', icon: <Wallet size={18} />, label: 'طلبات الشحن' },
         ] as const).map(item => (
           <div key={item.id} className={`sidebar-item ${tab === item.id ? 'active' : ''}`} onClick={() => setTab(item.id)}>
             {item.icon} {item.label}
@@ -171,7 +207,7 @@ export default function AdminPage() {
       {/* Main */}
       <div style={{ marginRight: '260px', flex: 1, padding: '40px 32px' }}>
         <h1 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '8px' }}>
-          {tab === 'overview' ? 'نظرة عامة' : tab === 'services' ? 'إدارة الخدمات' : tab === 'users' ? 'إدارة المستخدمين' : 'إدارة طلبات الخدمات'}
+          {tab === 'overview' ? 'نظرة عامة' : tab === 'services' ? 'إدارة الخدمات' : tab === 'users' ? 'إدارة المستخدمين' : tab === 'orders' ? 'إدارة طلبات الخدمات' : 'إدارة طلبات الشحن'}
         </h1>
         <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', fontSize: '0.9rem' }}>
           {tab === 'overview' ? 'إحصائيات الموقع' : tab === 'services' ? 'أضف وعدّل وأوقف الخدمات' : tab === 'users' ? 'أضف رصيد للمستخدمين' : 'تابع طلبات العملاء وتواصل معهم'}
@@ -366,6 +402,85 @@ export default function AdminPage() {
             )}
           </div>
         )}
+
+        {/* ===== DEPOSITS TAB ===== */}
+        {tab === 'deposits' && (
+          <div>
+            {loading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><div className="spinner" /></div>
+            ) : (
+              <div className="glass-card" style={{ overflow: 'hidden' }}>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>العميل</th>
+                      <th>المبلغ</th>
+                      <th>الرقم المحول منه</th>
+                      <th>الإثبات (الوصل)</th>
+                      <th>التاريخ</th>
+                      <th>الحالة</th>
+                      <th>الإجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {depositRequests.map(req => (
+                      <tr key={req.id}>
+                        <td>
+                          <div style={{ fontWeight: 600 }}>{req.displayName}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{req.userEmail}</div>
+                        </td>
+                        <td style={{ color: 'var(--gold)', fontWeight: 700 }}>{req.amount} ج.م</td>
+                        <td style={{ fontWeight: 'bold' }}>{req.senderPhone}</td>
+                        <td>
+                          {req.receiptImage ? (
+                            <button 
+                              className="btn-outline" 
+                              style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                              onClick={() => setActiveScreenshot(req.receiptImage)}
+                            >
+                              عرض الإسكرين 🖼️
+                            </button>
+                          ) : 'لا توجد صورة'}
+                        </td>
+                        <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                          {req.createdAt?.seconds ? new Date(req.createdAt.seconds * 1000).toLocaleString('ar-EG') : '-'}
+                        </td>
+                        <td>
+                          {req.status === 'pending' && <span style={{ background: 'rgba(234,179,8,0.1)', color: '#eab308', border: '1px solid rgba(234,179,8,0.2)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>قيد المراجعة</span>}
+                          {req.status === 'approved' && <span style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>تم الشحن ✅</span>}
+                          {req.status === 'rejected' && <span style={{ background: 'rgba(220,38,38,0.1)', color: '#f87171', border: '1px solid rgba(220,38,38,0.2)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>مرفوض ❌</span>}
+                        </td>
+                        <td>
+                          {req.status === 'pending' ? (
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button 
+                                onClick={() => handleApproveDeposit(req.id, req.userId, req.amount, req.userEmail)}
+                                style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '8px', cursor: 'pointer', background: 'rgba(34,197,94,0.15)', border: '1px solid #22c55e', color: '#22c55e', fontWeight: 600 }}
+                              >
+                                قبول
+                              </button>
+                              <button 
+                                onClick={() => handleRejectDeposit(req.id)}
+                                style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '8px', cursor: 'pointer', background: 'rgba(220,38,38,0.15)', border: '1px solid #dc2626', color: '#f87171' }}
+                              >
+                                رفض
+                              </button>
+                            </div>
+                          ) : (
+                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>مكتمل</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {depositRequests.length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>لا توجد طلبات شحن بعد</div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
 
@@ -431,6 +546,26 @@ export default function AdminPage() {
                 <button className="btn-outline" onClick={() => setShowBalanceModal(false)} style={{ flex: 1 }}>إلغاء</button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== SCREENSHOT LIGHTBOX MODAL ===== */}
+      {activeScreenshot && (
+        <div className="modal-overlay" onClick={() => setActiveScreenshot(null)} style={{ zIndex: 3000 }}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px', textAlign: 'center', background: '#0c0c14' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--gold)' }}>إثبات التحويل المرفق</h3>
+              <button onClick={() => setActiveScreenshot(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '1.2rem' }}>×</button>
+            </div>
+            <img 
+              src={activeScreenshot} 
+              alt="Uploaded receipt attachment" 
+              style={{ width: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: '12px', border: '1px solid var(--border)' }} 
+            />
+            <button className="btn-gold" onClick={() => setActiveScreenshot(null)} style={{ marginTop: '20px', width: '100%' }}>
+              إغلاق المعاينة
+            </button>
           </div>
         </div>
       )}

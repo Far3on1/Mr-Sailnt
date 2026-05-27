@@ -136,3 +136,64 @@ export const updateOrderStatus = async (txId: string, status: 'pending' | 'in_pr
   await updateDoc(doc(db, 'transactions', txId), { status });
 };
 
+// =================== DEPOSIT REQUESTS ===================
+export interface DepositRequest {
+  id: string;
+  userId: string;
+  userEmail: string;
+  displayName: string;
+  amount: number;
+  senderPhone: string;
+  receiptImage: string; // Base64 representation
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: any;
+}
+
+export const createDepositRequest = async (
+  userId: string,
+  userEmail: string,
+  displayName: string,
+  amount: number,
+  senderPhone: string,
+  receiptImage: string
+) => {
+  await addDoc(collection(db, 'deposit_requests'), {
+    userId,
+    userEmail,
+    displayName,
+    amount,
+    senderPhone,
+    receiptImage,
+    status: 'pending',
+    createdAt: serverTimestamp(),
+  });
+};
+
+export const getDepositRequests = async (): Promise<DepositRequest[]> => {
+  const snap = await getDocs(collection(db, 'deposit_requests'));
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() } as DepositRequest))
+    .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+};
+
+export const approveDepositRequest = async (requestId: string, userId: string, amount: number, userEmail: string) => {
+  // Update request status
+  await updateDoc(doc(db, 'deposit_requests', requestId), { status: 'approved' });
+  // Add balance to user
+  await updateDoc(doc(db, 'users', userId), { balance: increment(amount) });
+  // Log credit transaction
+  await addDoc(collection(db, 'transactions'), {
+    userId,
+    userEmail,
+    type: 'credit',
+    amount,
+    note: `شحن رصيد أورنج كاش مقبول`,
+    createdAt: serverTimestamp(),
+  });
+};
+
+export const rejectDepositRequest = async (requestId: string) => {
+  await updateDoc(doc(db, 'deposit_requests', requestId), { status: 'rejected' });
+};
+
+
