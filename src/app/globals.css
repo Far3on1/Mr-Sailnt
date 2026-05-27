@@ -399,3 +399,43 @@ input:checked + .toggle-slider::before { transform: translateX(-24px); }
   border-color: var(--border);
   color: var(--gold);
 }
+
+/* ======== MOBILE RESPONSIVENESS MEDIA QUERIES ======== */
+@media (max-width: 768px) {
+  /* Sidebar style transformation for mobile */
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    border-left: none;
+    border-bottom: 1px solid var(--border);
+    padding: 16px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .sidebar-item {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    gap: 6px;
+  }
+  
+  /* Resetting content margins */
+  div[style*="marginRight: 260px"],
+  div[style*="margin-right: 260px"] {
+    margin-right: 0 !important;
+    padding: 20px 16px !important;
+  }
+  
+  /* Make tables scrollable and responsive */
+  .glass-card {
+    overflow-x: auto !important;
+  }
+  
+  .data-table {
+    min-width: 600px;
+  }
+}
+
