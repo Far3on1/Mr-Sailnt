@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { getUserTransactions, getServices, purchaseService, Service } from '@/lib/firestore';
+import { getUserTransactions, getServices, purchaseService, Service, PaymentSettings } from '@/lib/firestore';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Wallet, LogOut, ShoppingBag, Clock, Home, Star, CheckCircle, XCircle } from 'lucide-react';
@@ -34,6 +34,11 @@ export default function Dashboard() {
   const [depositSender, setDepositSender] = useState('');
   const [depositReceipt, setDepositReceipt] = useState('');
   const [submittingDeposit, setSubmittingDeposit] = useState(false);
+  const [depositMethod, setDepositMethod] = useState<'orange_cash' | 'instapay'>('orange_cash');
+  const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
+    orangeCashNumber: '01201426302',
+    instaPayNumber: '01201426302'
+  });
 
   useEffect(() => {
     if (!authLoading && !user) { router.push('/auth'); return; }
@@ -50,12 +55,15 @@ export default function Dashboard() {
 
   const loadData = async () => {
     if (!user) return;
-    const [svcs, txs] = await Promise.all([
+    const { getPaymentSettings } = await import('@/lib/firestore');
+    const [svcs, txs, settings] = await Promise.all([
       getServices(),
       getUserTransactions(user.uid),
+      getPaymentSettings()
     ]);
     setServices(svcs);
     setTransactions(txs);
+    setPaymentSettings(settings);
   };
 
   useEffect(() => {
@@ -102,8 +110,9 @@ export default function Dashboard() {
   };
 
   const handleCopyNumber = () => {
-    navigator.clipboard.writeText('01201426302');
-    toast.success('تم نسخ الرقم بنجاح 📋');
+    const num = depositMethod === 'orange_cash' ? paymentSettings.orangeCashNumber : paymentSettings.instaPayNumber;
+    navigator.clipboard.writeText(num);
+    toast.success('تم نسخ رقم/عنوان التحويل بنجاح 📋');
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,7 +147,8 @@ export default function Dashboard() {
         userData?.displayName || 'مستخدم',
         Number(depositAmount),
         depositSender,
-        depositReceipt
+        depositReceipt,
+        depositMethod
       );
       toast.success('تم إرسال طلب الشحن بنجاح! قيد المراجعة حالياً ⏳');
       setDepositAmount('');
@@ -303,17 +313,44 @@ export default function Dashboard() {
             <div>
               <h2 className="section-title" style={{ marginBottom: '28px' }}>شحن رصيد المحفظة</h2>
               <div className="glass-card" style={{ padding: '32px', maxWidth: '600px', margin: '0 auto' }}>
+                
+                {/* Method Selector */}
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+                  <button 
+                    type="button"
+                    className={depositMethod === 'orange_cash' ? 'btn-gold' : 'btn-outline'} 
+                    onClick={() => { setDepositMethod('orange_cash'); setDepositSender(''); }}
+                    style={{ flex: 1, padding: '10px', fontSize: '0.9rem', fontWeight: 600 }}
+                  >
+                    أورنج كاش / فودافون
+                  </button>
+                  <button 
+                    type="button"
+                    className={depositMethod === 'instapay' ? 'btn-gold' : 'btn-outline'} 
+                    onClick={() => { setDepositMethod('instapay'); setDepositSender(''); }}
+                    style={{ flex: 1, padding: '10px', fontSize: '0.9rem', fontWeight: 600 }}
+                  >
+                    انستاباي InstaPay
+                  </button>
+                </div>
+
                 <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                   <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>💸</div>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>تحويل فودافون / أورنج كاش</h3>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>
+                    {depositMethod === 'orange_cash' ? 'تحويل فودافون / أورنج كاش' : 'تحويل عبر تطبيق انستاباي'}
+                  </h3>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '6px' }}>يرجى اتباع الخطوات التالية لشحن حسابك</p>
                 </div>
 
                 <div style={{ background: 'rgba(226,201,126,0.05)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', marginBottom: '24px' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>رقم التحويل المعتمد</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                    {depositMethod === 'orange_cash' ? 'رقم التحويل المعتمد' : 'رقم / عنوان انستاباي المعتمد'}
+                  </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--gold)', letterSpacing: '1px' }}>01201426302</span>
-                    <button className="btn-gold" onClick={handleCopyNumber} style={{ padding: '6px 16px', fontSize: '0.85rem' }}>
+                    <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--gold)', letterSpacing: '1px' }}>
+                      {depositMethod === 'orange_cash' ? paymentSettings.orangeCashNumber : paymentSettings.instaPayNumber}
+                    </span>
+                    <button type="button" className="btn-gold" onClick={handleCopyNumber} style={{ padding: '6px 16px', fontSize: '0.85rem' }}>
                       نسخ الرقم
                     </button>
                   </div>
@@ -326,8 +363,17 @@ export default function Dashboard() {
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>رقم المحفظة التي قمت بالتحويل منها *</label>
-                    <input className="input-gold" type="text" placeholder="مثال: 01xxxxxxxxx" value={depositSender} onChange={e => setDepositSender(e.target.value)} required />
+                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
+                      {depositMethod === 'orange_cash' ? 'رقم المحفظة التي قمت بالتحويل منها *' : 'اسم حساب انستاباي أو رقم المحفظة المحول منها *'}
+                    </label>
+                    <input 
+                      className="input-gold" 
+                      type="text" 
+                      placeholder={depositMethod === 'orange_cash' ? 'مثال: 01xxxxxxxxx' : 'مثال: username@instapay أو رقم هاتف'} 
+                      value={depositSender} 
+                      onChange={e => setDepositSender(e.target.value)} 
+                      required 
+                    />
                   </div>
 
                   <div>

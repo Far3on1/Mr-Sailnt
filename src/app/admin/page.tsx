@@ -6,17 +6,18 @@ import { useAuth } from '@/context/AuthContext';
 import {
   getServices, addService, updateService, deleteService,
   getAllUsers, addBalanceToUser, Service, UserRecord,
-  getAllTransactions, updateOrderStatus
+  getAllTransactions, updateOrderStatus,
+  getPaymentSettings, updatePaymentSettings, PaymentSettings
 } from '@/lib/firestore';
 
 import {
   LayoutDashboard, Package, Users, Plus, Edit2, Trash2,
-  ToggleLeft, ToggleRight, Wallet, Home, LogOut, Save, X, Star
+  ToggleLeft, ToggleRight, Wallet, Home, LogOut, Save, X, Star, Settings
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
-type Tab = 'overview' | 'services' | 'users' | 'orders' | 'deposits';
+type Tab = 'overview' | 'services' | 'users' | 'orders' | 'deposits' | 'settings';
 
 export default function AdminPage() {
   const { user, isAdmin, logout, loading: authLoading } = useAuth();
@@ -47,6 +48,11 @@ export default function AdminPage() {
   const [balanceNote, setBalanceNote] = useState('');
   const [balanceSaving, setBalanceSaving] = useState(false);
 
+  // Payment Settings State
+  const [orangeCashNumber, setOrangeCashNumber] = useState('01201426302');
+  const [instaPayNumber, setInstaPayNumber] = useState('01201426302');
+  const [settingsSaving, setSettingsSaving] = useState(false);
+
   useEffect(() => {
     if (authLoading) return;
     if (!user) { router.push('/auth'); return; }
@@ -57,17 +63,35 @@ export default function AdminPage() {
   const loadData = async () => {
     setLoading(true);
     const { getDepositRequests } = await import('@/lib/firestore');
-    const [svcs, usrs, txs, deps] = await Promise.all([
+    const [svcs, usrs, txs, deps, settings] = await Promise.all([
       getServices(), 
       getAllUsers(), 
       getAllTransactions(),
-      getDepositRequests()
+      getDepositRequests(),
+      getPaymentSettings()
     ]);
     setServices(svcs);
     setUsers(usrs.filter(u => u.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL));
     setTransactions(txs);
     setDepositRequests(deps);
+    setOrangeCashNumber(settings.orangeCashNumber);
+    setInstaPayNumber(settings.instaPayNumber);
     setLoading(false);
+  };
+
+  const handleSaveSettings = async () => {
+    if (!orangeCashNumber.trim() || !instaPayNumber.trim()) {
+      return toast.error('من فضلك أكمل جميع الحقول');
+    }
+    setSettingsSaving(true);
+    try {
+      await updatePaymentSettings({ orangeCashNumber, instaPayNumber });
+      toast.success('تم حفظ إعدادات الدفع بنجاح ✅');
+    } catch {
+      toast.error('حدث خطأ أثناء حفظ الإعدادات');
+    } finally {
+      setSettingsSaving(false);
+    }
   };
 
   useEffect(() => { if (isAdmin) loadData(); }, [isAdmin]);
@@ -187,6 +211,7 @@ export default function AdminPage() {
           { id: 'users', icon: <Users size={18} />, label: 'المستخدمون' },
           { id: 'orders', icon: <Wallet size={18} />, label: 'طلبات الخدمات' },
           { id: 'deposits', icon: <Wallet size={18} />, label: 'طلبات الشحن' },
+          { id: 'settings', icon: <Settings size={18} />, label: 'إعدادات الدفع' },
         ] as const).map(item => (
           <div key={item.id} className={`sidebar-item ${tab === item.id ? 'active' : ''}`} onClick={() => setTab(item.id)}>
             {item.icon} {item.label}
@@ -207,10 +232,10 @@ export default function AdminPage() {
       {/* Main */}
       <div style={{ marginRight: '260px', flex: 1, padding: '40px 32px' }}>
         <h1 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '8px' }}>
-          {tab === 'overview' ? 'نظرة عامة' : tab === 'services' ? 'إدارة الخدمات' : tab === 'users' ? 'إدارة المستخدمين' : tab === 'orders' ? 'إدارة طلبات الخدمات' : 'إدارة طلبات الشحن'}
+          {tab === 'overview' ? 'نظرة عامة' : tab === 'services' ? 'إدارة الخدمات' : tab === 'users' ? 'إدارة المستخدمين' : tab === 'orders' ? 'إدارة طلبات الخدمات' : tab === 'deposits' ? 'إدارة طلبات الشحن' : 'إعدادات الدفع'}
         </h1>
         <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', fontSize: '0.9rem' }}>
-          {tab === 'overview' ? 'إحصائيات الموقع' : tab === 'services' ? 'أضف وعدّل وأوقف الخدمات' : tab === 'users' ? 'أضف رصيد للمستخدمين' : 'تابع طلبات العملاء وتواصل معهم'}
+          {tab === 'overview' ? 'إحصائيات الموقع' : tab === 'services' ? 'أضف وعدّل وأوقف الخدمات' : tab === 'users' ? 'إدارة أرصدة وحسابات المستخدمين' : tab === 'orders' ? 'تابع طلبات الخدمات وتواصل مع العملاء' : tab === 'deposits' ? 'مراجعة طلبات شحن المحفظة المالية' : 'تحديث أرقام وعناوين تحويل الأموال'}
         </p>
 
         {/* ===== OVERVIEW ===== */}
@@ -414,8 +439,9 @@ export default function AdminPage() {
                   <thead>
                     <tr>
                       <th>العميل</th>
+                      <th>طريقة الشحن</th>
                       <th>المبلغ</th>
-                      <th>الرقم المحول منه</th>
+                      <th>الرقم / الحساب المحول منه</th>
                       <th>الإثبات (الوصل)</th>
                       <th>التاريخ</th>
                       <th>الحالة</th>
@@ -428,6 +454,13 @@ export default function AdminPage() {
                         <td>
                           <div style={{ fontWeight: 600 }}>{req.displayName}</div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{req.userEmail}</div>
+                        </td>
+                        <td>
+                          {req.method === 'instapay' ? (
+                            <span style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>انستاباي</span>
+                          ) : (
+                            <span style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--gold)', border: '1px solid rgba(226,201,126,0.2)', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>أورنج كاش</span>
+                          )}
                         </td>
                         <td style={{ color: 'var(--gold)', fontWeight: 700 }}>{req.amount} ج.م</td>
                         <td style={{ fontWeight: 'bold' }}>{req.senderPhone}</td>
@@ -479,6 +512,54 @@ export default function AdminPage() {
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ===== SETTINGS TAB ===== */}
+        {tab === 'settings' && (
+          <div className="glass-card animate-fade-up" style={{ padding: '32px', maxWidth: '600px' }}>
+            <h2 className="section-title" style={{ marginBottom: '24px', fontSize: '1.25rem' }}>إعدادات طرق الدفع والشحن</h2>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div>
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>
+                  رقم تحويل أورنج كاش / فودافون كاش *
+                </label>
+                <input 
+                  className="input-gold" 
+                  type="text" 
+                  value={orangeCashNumber} 
+                  onChange={e => setOrangeCashNumber(e.target.value)} 
+                  placeholder="مثال: 01201426302"
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>
+                  رقم أو عنوان انستاباي InstaPay *
+                </label>
+                <input 
+                  className="input-gold" 
+                  type="text" 
+                  value={instaPayNumber} 
+                  onChange={e => setInstaPayNumber(e.target.value)} 
+                  placeholder="مثال: username@instapay أو رقم هاتف"
+                  required
+                />
+              </div>
+
+              <div style={{ marginTop: '12px' }}>
+                <button 
+                  className="btn-gold" 
+                  onClick={handleSaveSettings} 
+                  disabled={settingsSaving}
+                  style={{ width: '100%', padding: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 600 }}
+                >
+                  <Save size={18} /> {settingsSaving ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

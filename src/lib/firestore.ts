@@ -3,6 +3,7 @@ import {
   doc,
   getDocs,
   getDoc,
+  setDoc,
   addDoc,
   updateDoc,
   deleteDoc,
@@ -146,6 +147,7 @@ export interface DepositRequest {
   senderPhone: string;
   receiptImage: string; // Base64 representation
   status: 'pending' | 'approved' | 'rejected';
+  method?: string; // 'orange_cash' | 'instapay'
   createdAt: any;
 }
 
@@ -155,7 +157,8 @@ export const createDepositRequest = async (
   displayName: string,
   amount: number,
   senderPhone: string,
-  receiptImage: string
+  receiptImage: string,
+  method: string = 'orange_cash'
 ) => {
   await addDoc(collection(db, 'deposit_requests'), {
     userId,
@@ -165,6 +168,7 @@ export const createDepositRequest = async (
     senderPhone,
     receiptImage,
     status: 'pending',
+    method,
     createdAt: serverTimestamp(),
   });
 };
@@ -187,13 +191,42 @@ export const approveDepositRequest = async (requestId: string, userId: string, a
     userEmail,
     type: 'credit',
     amount,
-    note: `شحن رصيد أورنج كاش مقبول`,
+    note: `شحن رصيد مقبول`,
     createdAt: serverTimestamp(),
   });
 };
 
 export const rejectDepositRequest = async (requestId: string) => {
   await updateDoc(doc(db, 'deposit_requests', requestId), { status: 'rejected' });
+};
+
+// =================== PAYMENT SETTINGS ===================
+export interface PaymentSettings {
+  orangeCashNumber: string;
+  instaPayNumber: string;
+}
+
+export const getPaymentSettings = async (): Promise<PaymentSettings> => {
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'payment'));
+    if (snap.exists()) {
+      const data = snap.data();
+      return {
+        orangeCashNumber: data.orangeCashNumber || '01201426302',
+        instaPayNumber: data.instaPayNumber || '01201426302',
+      };
+    }
+  } catch (e) {
+    console.error('Error fetching settings:', e);
+  }
+  return {
+    orangeCashNumber: '01201426302',
+    instaPayNumber: '01201426302',
+  };
+};
+
+export const updatePaymentSettings = async (settings: PaymentSettings) => {
+  await setDoc(doc(db, 'settings', 'payment'), settings);
 };
 
 
