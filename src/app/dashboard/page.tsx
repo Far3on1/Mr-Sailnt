@@ -78,7 +78,7 @@ export default function Dashboard() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const cat = params.get('category');
-      if (cat && ['vodafone', 'orange', 'etisalat', 'we'].includes(cat)) {
+      if (cat && ['vodafone', 'orange', 'etisalat', 'we', 'civil'].includes(cat)) {
         setActiveCategory(cat);
       }
     }
@@ -366,27 +366,31 @@ export default function Dashboard() {
                         const rootServices = services
                           .filter(s => s.isAvailable && (!s.category || s.category === 'none'))
                           .sort((a, b) => {
-                            const isNetA = a.name.toLowerCase().includes('فودافون') || 
-                                           a.name.toLowerCase().includes('اورنج') || 
-                                           a.name.toLowerCase().includes('أورنج') || 
-                                           a.name.toLowerCase().includes('اتصالات') || 
-                                           a.name.toLowerCase().includes('we') || 
-                                           a.name.toLowerCase().split(/\s+/).includes('وي');
-                            const isNetB = b.name.toLowerCase().includes('فودافون') || 
-                                           b.name.toLowerCase().includes('اورنج') || 
-                                           b.name.toLowerCase().includes('أورنج') || 
-                                           b.name.toLowerCase().includes('اتصالات') || 
-                                           b.name.toLowerCase().includes('we') || 
-                                           b.name.toLowerCase().split(/\s+/).includes('وي');
-                            return (isNetB ? 1 : 0) - (isNetA ? 1 : 0);
-                          });
+                             const getWeight = (name: string) => {
+                               const nameLower = name.toLowerCase();
+                               if (nameLower.includes('فودافون') || 
+                                   nameLower.includes('اورنج') || 
+                                   nameLower.includes('أورنج') || 
+                                   nameLower.includes('اتصالات') || 
+                                   nameLower.includes('we') || 
+                                   nameLower.split(/\s+/).includes('وي')) {
+                                 return 2;
+                               }
+                               if (nameLower.includes('سجل مدني') || nameLower.includes('السجل المدني')) {
+                                 return 1;
+                               }
+                               return 0;
+                             };
+                             return getWeight(b.name) - getWeight(a.name);
+                           });
 
                         return rootServices.map(service => {
                           const nameLower = service.name.toLowerCase();
                           const catCode = nameLower.includes('فودافون') ? 'vodafone' :
                                           (nameLower.includes('اورنج') || nameLower.includes('أورنج')) ? 'orange' :
                                           nameLower.includes('اتصالات') ? 'etisalat' :
-                                          (nameLower.includes('we') || nameLower.split(/\s+/).includes('وي')) ? 'we' : null;
+                                          (nameLower.includes('we') || nameLower.split(/\s+/).includes('وي')) ? 'we' :
+                                          (nameLower.includes('سجل مدني') || nameLower.includes('السجل المدني')) ? 'civil' : null;
                           const isCategory = catCode !== null;
                           return (
                             <div key={service.id} className="glass-card" style={{ padding: '24px', border: isCategory ? '1px solid rgba(226,201,126,0.15)' : undefined }}>
@@ -442,7 +446,8 @@ export default function Dashboard() {
                       {activeCategory === 'vodafone' ? 'خدمات فودافون' :
                        activeCategory === 'orange' ? 'خدمات اورنج' :
                        activeCategory === 'etisalat' ? 'خدمات اتصالات' :
-                       activeCategory === 'we' ? 'خدمات We' : 'الخدمات الفرعية'}
+                       activeCategory === 'we' ? 'خدمات We' :
+                       activeCategory === 'civil' ? 'خدمات السجل المدني' : 'الخدمات الفرعية'}
                     </h2>
                     <button 
                       className="btn-outline" 

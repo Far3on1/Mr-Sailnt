@@ -371,10 +371,11 @@ export default function AdminPage() {
                       <tr key={s.id}>
                         <td style={{ fontWeight: 600 }}>{s.name}</td>
                         <td style={{ fontSize: '0.85rem', color: 'var(--gold)' }}>
-                          {s.category === 'vodafone' ? 'خدمات فودافون' :
-                           s.category === 'orange' ? 'خدمات اورنج' :
-                           s.category === 'etisalat' ? 'خدمات اتصالات' :
-                           s.category === 'we' ? 'خدمات We' : 'بدون'}
+                           {s.category === 'vodafone' ? 'خدمات فودافون' :
+                            s.category === 'orange' ? 'خدمات اورنج' :
+                            s.category === 'etisalat' ? 'خدمات اتصالات' :
+                            s.category === 'we' ? 'خدمات We' :
+                            s.category === 'civil' ? 'خدمات السجل المدني' : 'بدون'}
                         </td>
                         <td style={{ color: 'var(--text-secondary)', maxWidth: '200px' }}>{s.description || '-'}</td>
                         <td style={{ color: 'var(--gold)', fontWeight: 700 }}>{s.price} ج.م</td>
@@ -696,6 +697,7 @@ export default function AdminPage() {
                   <option value="orange">خدمات اورنج</option>
                   <option value="etisalat">خدمات اتصالات</option>
                   <option value="we">خدمات We</option>
+                  <option value="civil">خدمات السجل المدني</option>
                 </select>
               </div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>

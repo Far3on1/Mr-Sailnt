@@ -26,19 +26,22 @@ export default function Home() {
   const availableServices = services
     .filter(s => s.isAvailable && (!s.category || s.category === 'none'))
     .sort((a, b) => {
-      const isNetA = a.name.toLowerCase().includes('فودافون') || 
-                     a.name.toLowerCase().includes('اورنج') || 
-                     a.name.toLowerCase().includes('أورنج') || 
-                     a.name.toLowerCase().includes('اتصالات') || 
-                     a.name.toLowerCase().includes('we') || 
-                     a.name.toLowerCase().split(/\s+/).includes('وي');
-      const isNetB = b.name.toLowerCase().includes('فودافون') || 
-                     b.name.toLowerCase().includes('اورنج') || 
-                     b.name.toLowerCase().includes('أورنج') || 
-                     b.name.toLowerCase().includes('اتصالات') || 
-                     b.name.toLowerCase().includes('we') || 
-                     b.name.toLowerCase().split(/\s+/).includes('وي');
-      return (isNetB ? 1 : 0) - (isNetA ? 1 : 0);
+      const getWeight = (name: string) => {
+        const nameLower = name.toLowerCase();
+        if (nameLower.includes('فودافون') || 
+            nameLower.includes('اورنج') || 
+            nameLower.includes('أورنج') || 
+            nameLower.includes('اتصالات') || 
+            nameLower.includes('we') || 
+            nameLower.split(/\s+/).includes('وي')) {
+          return 2;
+        }
+        if (nameLower.includes('سجل مدني') || nameLower.includes('السجل المدني')) {
+          return 1;
+        }
+        return 0;
+      };
+      return getWeight(b.name) - getWeight(a.name);
     });
 
   return (
@@ -182,7 +185,8 @@ function ServiceCard({ service, user, userData }: { service: Service; user: any;
   const catCode = nameLower.includes('فودافون') ? 'vodafone' :
                   (nameLower.includes('اورنج') || nameLower.includes('أورنج')) ? 'orange' :
                   nameLower.includes('اتصالات') ? 'etisalat' :
-                  (nameLower.includes('we') || nameLower.split(/\s+/).includes('وي')) ? 'we' : null;
+                  (nameLower.includes('we') || nameLower.split(/\s+/).includes('وي')) ? 'we' :
+                  (nameLower.includes('سجل مدني') || nameLower.includes('السجل المدني')) ? 'civil' : null;
   const isCategory = catCode !== null;
 
   return (
