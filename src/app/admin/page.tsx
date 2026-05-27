@@ -40,6 +40,7 @@ export default function AdminPage() {
   const [svcDesc, setSvcDesc] = useState('');
   const [svcPrice, setSvcPrice] = useState('');
   const [svcSaving, setSvcSaving] = useState(false);
+  const [svcCategory, setSvcCategory] = useState('none');
 
   // Balance Modal
   const [showBalanceModal, setShowBalanceModal] = useState(false);
@@ -100,11 +101,13 @@ export default function AdminPage() {
   const openAddService = () => {
     setEditingService(null);
     setSvcName(''); setSvcDesc(''); setSvcPrice('');
+    setSvcCategory('none');
     setShowServiceModal(true);
   };
   const openEditService = (s: Service) => {
     setEditingService(s);
     setSvcName(s.name); setSvcDesc(s.description); setSvcPrice(String(s.price));
+    setSvcCategory(s.category || 'none');
     setShowServiceModal(true);
   };
   const saveService = async () => {
@@ -112,10 +115,10 @@ export default function AdminPage() {
     setSvcSaving(true);
     try {
       if (editingService) {
-        await updateService(editingService.id, { name: svcName, description: svcDesc, price: Number(svcPrice) });
+        await updateService(editingService.id, { name: svcName, description: svcDesc, price: Number(svcPrice), category: svcCategory });
         toast.success('تم تعديل الخدمة ✅');
       } else {
-        await addService({ name: svcName, description: svcDesc, price: Number(svcPrice), isAvailable: true });
+        await addService({ name: svcName, description: svcDesc, price: Number(svcPrice), isAvailable: true, category: svcCategory });
         toast.success('تم إضافة الخدمة ✅');
       }
       setShowServiceModal(false);
@@ -339,6 +342,7 @@ export default function AdminPage() {
                   <thead>
                     <tr>
                       <th>اسم الخدمة</th>
+                      <th>القسم</th>
                       <th>الوصف</th>
                       <th>السعر</th>
                       <th>الحالة</th>
@@ -349,6 +353,12 @@ export default function AdminPage() {
                     {services.map(s => (
                       <tr key={s.id}>
                         <td style={{ fontWeight: 600 }}>{s.name}</td>
+                        <td style={{ fontSize: '0.85rem', color: 'var(--gold)' }}>
+                          {s.category === 'vodafone' ? 'خدمات فودافون' :
+                           s.category === 'orange' ? 'خدمات اورنج' :
+                           s.category === 'etisalat' ? 'خدمات اتصالات' :
+                           s.category === 'we' ? 'خدمات We' : 'بدون'}
+                        </td>
                         <td style={{ color: 'var(--text-secondary)', maxWidth: '200px' }}>{s.description || '-'}</td>
                         <td style={{ color: 'var(--gold)', fontWeight: 700 }}>{s.price} ج.م</td>
                         <td>
@@ -654,6 +664,21 @@ export default function AdminPage() {
               <div>
                 <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>السعر (ج.م) *</label>
                 <input className="input-gold" type="number" placeholder="0" value={svcPrice} onChange={e => setSvcPrice(e.target.value)} min="0" />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>القسم التابع له الخدمة</label>
+                <select 
+                  className="input-gold" 
+                  value={svcCategory} 
+                  onChange={e => setSvcCategory(e.target.value)}
+                  style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)', padding: '12px', borderRadius: '10px', width: '100%', fontFamily: 'var(--font-tajawal), sans-serif' }}
+                >
+                  <option value="none">بدون (خدمة مستقلة / رئيسية)</option>
+                  <option value="vodafone">خدمات فودافون</option>
+                  <option value="orange">خدمات اورنج</option>
+                  <option value="etisalat">خدمات اتصالات</option>
+                  <option value="we">خدمات We</option>
+                </select>
               </div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
                 <button className="btn-gold" onClick={saveService} disabled={svcSaving} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>

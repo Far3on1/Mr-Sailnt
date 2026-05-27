@@ -40,6 +40,7 @@ export default function Dashboard() {
     instaPayNumber: '01201426302'
   });
   const [showSpecialServices, setShowSpecialServices] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) { router.push('/auth'); return; }
@@ -280,7 +281,7 @@ export default function Dashboard() {
           <Link href="/" className="sidebar-item" style={{ textDecoration: 'none' }}>
             <Home size={18} /> الرئيسية
           </Link>
-          <div className={`sidebar-item ${tab === 'services' ? 'active' : ''}`} onClick={() => { setTab('services'); setShowSpecialServices(false); setMenuOpen(false); }}>
+          <div className={`sidebar-item ${tab === 'services' ? 'active' : ''}`} onClick={() => { setTab('services'); setShowSpecialServices(false); setActiveCategory(null); setMenuOpen(false); }}>
             <ShoppingBag size={18} /> الخدمات
           </div>
           <div className={`sidebar-item ${tab === 'deposit' ? 'active' : ''}`} onClick={() => { setTab('deposit'); setMenuOpen(false); }}>
@@ -370,51 +371,133 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
-                    <h2 className="section-title" style={{ margin: 0 }}>خدمات خاصة</h2>
-                    <button 
-                      className="btn-outline" 
-                      onClick={() => setShowSpecialServices(false)}
-                      style={{ padding: '8px 20px', fontSize: '0.9rem' }}
-                    >
-                      ← العودة للأقسام
-                    </button>
-                  </div>
+                  {activeCategory === null ? (
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+                        <h2 className="section-title" style={{ margin: 0 }}>خدمات خاصة</h2>
+                        <button 
+                          className="btn-outline" 
+                          onClick={() => setShowSpecialServices(false)}
+                          style={{ padding: '8px 20px', fontSize: '0.9rem' }}
+                        >
+                          ← العودة للأقسام
+                        </button>
+                      </div>
 
-                  {loading ? (
-                    <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><div className="spinner" /></div>
-                  ) : services.filter(s => s.isAvailable).length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>
-                      <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🔧</div>
-                      <p>لا توجد خدمات خاصة متاحة حالياً</p>
+                      {loading ? (
+                        <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><div className="spinner" /></div>
+                      ) : services.filter(s => s.isAvailable && (!s.category || s.category === 'none')).length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>
+                          <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🔧</div>
+                          <p>لا توجد خدمات خاصة متاحة حالياً</p>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                          {services.filter(s => s.isAvailable && (!s.category || s.category === 'none')).map(service => {
+                            const catCode = service.name === 'خدمات فودافون' ? 'vodafone' :
+                                            service.name === 'خدمات اورنج' ? 'orange' :
+                                            service.name === 'خدمات اتصالات' ? 'etisalat' :
+                                            service.name === 'خدمات We' ? 'we' : null;
+                            const isCategory = catCode !== null;
+
+                            return (
+                              <div key={service.id} className="glass-card" style={{ padding: '24px', border: isCategory ? '1px solid rgba(226,201,126,0.15)' : undefined }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                                  <h3 style={{ fontSize: '1.05rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    {isCategory ? '📁' : ''} {service.name}
+                                  </h3>
+                                  <span className="badge-available">متاح</span>
+                                </div>
+                                {service.description && (
+                                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '16px' }}>{service.description}</p>
+                                )}
+                                <div className="divider" />
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
+                                  {!isCategory ? (
+                                    <div style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1.3rem' }}>
+                                      {service.price} <span style={{ fontSize: '0.75rem', fontWeight: 400 }}>ج.م</span>
+                                    </div>
+                                  ) : (
+                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>باقة خدمات</div>
+                                  )}
+                                  
+                                  {isCategory ? (
+                                    <button
+                                      className="btn-gold"
+                                      style={{ padding: '8px 24px', fontSize: '0.9rem', fontWeight: 600 }}
+                                      onClick={() => setActiveCategory(catCode)}
+                                    >
+                                      دخول
+                                    </button>
+                                  ) : (
+                                    <button
+                                      className="btn-gold"
+                                      style={{ padding: '8px 18px', fontSize: '0.9rem' }}
+                                      disabled={buying === service.id || liveBalance < service.price}
+                                      onClick={() => triggerBuyFlow(service)}
+                                    >
+                                      {buying === service.id ? '...' : liveBalance < service.price ? 'رصيد غير كافٍ' : 'اشتري'}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-                      {services.filter(s => s.isAvailable).map(service => (
-                        <div key={service.id} className="glass-card" style={{ padding: '24px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                            <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>{service.name}</h3>
-                            <span className="badge-available">متاح</span>
-                          </div>
-                          {service.description && (
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '16px' }}>{service.description}</p>
-                          )}
-                          <div className="divider" />
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
-                            <div style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1.3rem' }}>
-                              {service.price} <span style={{ fontSize: '0.75rem', fontWeight: 400 }}>ج.م</span>
-                            </div>
-                            <button
-                              className="btn-gold"
-                              style={{ padding: '8px 18px', fontSize: '0.9rem' }}
-                              disabled={buying === service.id || liveBalance < service.price}
-                              onClick={() => triggerBuyFlow(service)}
-                            >
-                              {buying === service.id ? '...' : liveBalance < service.price ? 'رصيد غير كافٍ' : 'اشتري'}
-                            </button>
-                          </div>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+                        <h2 className="section-title" style={{ margin: 0 }}>
+                          {activeCategory === 'vodafone' ? 'خدمات فودافون' :
+                           activeCategory === 'orange' ? 'خدمات اورنج' :
+                           activeCategory === 'etisalat' ? 'خدمات اتصالات' :
+                           activeCategory === 'we' ? 'خدمات We' : 'الخدمات الفرعية'}
+                        </h2>
+                        <button 
+                          className="btn-outline" 
+                          onClick={() => setActiveCategory(null)}
+                          style={{ padding: '8px 20px', fontSize: '0.9rem' }}
+                        >
+                          ← العودة للشبكات
+                        </button>
+                      </div>
+
+                      {services.filter(s => s.isAvailable && s.category === activeCategory).length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>
+                          <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🔧</div>
+                          <p>لا توجد خدمات متاحة حالياً في هذا القسم</p>
                         </div>
-                      ))}
+                      ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                          {services.filter(s => s.isAvailable && s.category === activeCategory).map(service => (
+                            <div key={service.id} className="glass-card" style={{ padding: '24px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                                <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>{service.name}</h3>
+                                <span className="badge-available">متاح</span>
+                              </div>
+                              {service.description && (
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '16px' }}>{service.description}</p>
+                              )}
+                              <div className="divider" />
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
+                                <div style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1.3rem' }}>
+                                  {service.price} <span style={{ fontSize: '0.75rem', fontWeight: 400 }}>ج.م</span>
+                                </div>
+                                <button
+                                  className="btn-gold"
+                                  style={{ padding: '8px 18px', fontSize: '0.9rem' }}
+                                  disabled={buying === service.id || liveBalance < service.price}
+                                  onClick={() => triggerBuyFlow(service)}
+                                >
+                                  {buying === service.id ? '...' : liveBalance < service.price ? 'رصيد غير كافٍ' : 'اشتري'}
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

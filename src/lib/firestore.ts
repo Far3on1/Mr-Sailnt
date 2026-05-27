@@ -21,6 +21,7 @@ export interface Service {
   description: string;
   price: number;
   isAvailable: boolean;
+  category?: string;
   createdAt: unknown;
 }
 
