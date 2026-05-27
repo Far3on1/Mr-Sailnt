@@ -100,6 +100,11 @@ export default function Dashboard() {
     if (!targetNumber.trim()) return toast.error('يرجى كتابة الرقم المطلوب');
     if (!whatsappNumber.trim()) return toast.error('يرجى كتابة رقم الواتساب');
 
+    const isNationalIdService = selectedService.name.includes('الرقم القومي');
+    if (isNationalIdService && !/^\d{14}$/.test(targetNumber.trim())) {
+      return toast.error('يجب أن يتكون الرقم القومي من 14 رقم بالضبط');
+    }
+
     setBuying(selectedService.id);
     setShowOrderModal(false);
     try {
@@ -653,18 +658,23 @@ export default function Dashboard() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
-                  رقم الهاتف المراد سحب بياناته *
-                </label>
-                <input
-                  className="input-gold"
-                  type="text"
-                  placeholder="مثال: 01xxxxxxxxx"
-                  value={targetNumber}
-                  onChange={e => setTargetNumber(e.target.value)}
-                />
-              </div>
+              {(() => {
+                const isNationalId = selectedService.name.includes('الرقم القومي');
+                return (
+                  <div>
+                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
+                      {isNationalId ? 'الرقم القومي المراد الاستعلام عنه (14 رقم) *' : 'رقم الهاتف المراد سحب بياناته *'}
+                    </label>
+                    <input
+                      className="input-gold"
+                      type="text"
+                      placeholder={isNationalId ? 'مثال: 2991201xxxxxxxx' : 'مثال: 01xxxxxxxxx'}
+                      value={targetNumber}
+                      onChange={e => setTargetNumber(e.target.value)}
+                    />
+                  </div>
+                );
+              })()}
 
               <div>
                 <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
