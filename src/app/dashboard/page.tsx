@@ -394,10 +394,11 @@ export default function Dashboard() {
                       ) : (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
                           {services.filter(s => s.isAvailable && (!s.category || s.category === 'none')).map(service => {
-                            const catCode = service.name === 'خدمات فودافون' ? 'vodafone' :
-                                            service.name === 'خدمات اورنج' ? 'orange' :
-                                            service.name === 'خدمات اتصالات' ? 'etisalat' :
-                                            service.name === 'خدمات We' ? 'we' : null;
+                            const nameLower = service.name.toLowerCase();
+                            const catCode = nameLower.includes('فودافون') ? 'vodafone' :
+                                            (nameLower.includes('اورنج') || nameLower.includes('أورنج')) ? 'orange' :
+                                            nameLower.includes('اتصالات') ? 'etisalat' :
+                                            (nameLower.includes('we') || nameLower.includes('وي')) ? 'we' : null;
                             const isCategory = catCode !== null;
 
                             return (
