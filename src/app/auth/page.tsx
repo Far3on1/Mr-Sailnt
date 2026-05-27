@@ -9,17 +9,33 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 
 export default function AuthPage() {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [mode, setMode] = useState<'login' | 'register' | 'forgot_password'>('login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { loginWithEmail, registerWithEmail, loginWithGoogle } = useAuth();
+  const { loginWithEmail, registerWithEmail, loginWithGoogle, resetPassword } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (mode === 'forgot_password') {
+      if (!email) return toast.error('من فضلك أدخل البريد الإلكتروني');
+      setLoading(true);
+      try {
+        await resetPassword(email);
+        toast.success('تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني ✉️');
+        setMode('login');
+      } catch (err: any) {
+        toast.error('حدث خطأ، يرجى التأكد من صحة البريد الإلكتروني');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     if (!email || !password) return toast.error('من فضلك أدخل جميع البيانات');
     if (mode === 'register' && !name) return toast.error('أدخل اسمك');
     if (password.length < 6) return toast.error('كلمة المرور 6 أحرف على الأقل');
@@ -73,22 +89,29 @@ export default function AuthPage() {
         </Link>
 
         <div className="glass-card" style={{ padding: '36px' }}>
-          {/* Tabs */}
-          <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '12px', padding: '4px', marginBottom: '28px' }}>
-            {(['login', 'register'] as const).map(m => (
-              <button key={m} onClick={() => setMode(m)} style={{
-                flex: 1, padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-                background: mode === m ? 'var(--gold-dark)' : 'transparent',
-                color: mode === m ? '#0a0a0f' : 'var(--text-secondary)',
-                fontWeight: mode === m ? 700 : 400,
-                transition: 'all 0.3s ease',
-                fontFamily: 'var(--font-tajawal), sans-serif',
-                fontSize: '1rem',
-              }}>
-                {m === 'login' ? 'تسجيل الدخول' : 'حساب جديد'}
-              </button>
-            ))}
-          </div>
+          {/* Tabs / Header */}
+          {mode === 'forgot_password' ? (
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--gold)' }}>إعادة تعيين كلمة المرور</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '6px' }}>أدخل بريدك الإلكتروني لإرسال رابط إعادة التعيين</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '12px', padding: '4px', marginBottom: '28px' }}>
+              {(['login', 'register'] as const).map(m => (
+                <button key={m} onClick={() => setMode(m)} style={{
+                  flex: 1, padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                  background: mode === m ? 'var(--gold-dark)' : 'transparent',
+                  color: mode === m ? '#0a0a0f' : 'var(--text-secondary)',
+                  fontWeight: mode === m ? 700 : 400,
+                  transition: 'all 0.3s ease',
+                  fontFamily: 'var(--font-tajawal), sans-serif',
+                  fontSize: '1rem',
+                }}>
+                  {m === 'login' ? 'تسجيل الدخول' : 'حساب جديد'}
+                </button>
+              ))}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {mode === 'register' && (
@@ -101,17 +124,42 @@ export default function AuthPage() {
               <Mail size={18} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
               <input className="input-gold" type="email" placeholder="الإيميل" value={email} onChange={e => setEmail(e.target.value)} style={{ paddingRight: '44px' }} />
             </div>
-            <div style={{ position: 'relative' }}>
-              <Lock size={18} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-              <input className="input-gold" type={showPass ? 'text' : 'password'} placeholder="كلمة المرور" value={password} onChange={e => setPassword(e.target.value)} style={{ paddingRight: '44px', paddingLeft: '44px' }} />
-              <button type="button" onClick={() => setShowPass(!showPass)} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
+            
+            {mode !== 'forgot_password' && (
+              <div style={{ position: 'relative' }}>
+                <Lock size={18} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+                <input className="input-gold" type={showPass ? 'text' : 'password'} placeholder="كلمة المرور" value={password} onChange={e => setPassword(e.target.value)} style={{ paddingRight: '44px', paddingLeft: '44px' }} />
+                <button type="button" onClick={() => setShowPass(!showPass)} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                  {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            )}
+
+            {mode === 'login' && (
+              <div style={{ textAlign: 'left', marginTop: '-8px' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setMode('forgot_password')} 
+                  style={{ background: 'none', border: 'none', color: 'var(--gold)', fontSize: '0.8rem', cursor: 'pointer', fontFamily: 'var(--font-tajawal), sans-serif' }}
+                >
+                  هل نسيت كلمة المرور؟
+                </button>
+              </div>
+            )}
 
             <button className="btn-gold" type="submit" disabled={loading} style={{ marginTop: '4px', fontSize: '1.05rem', padding: '14px' }}>
-              {loading ? '...' : mode === 'login' ? 'دخول' : 'إنشاء حساب'}
+              {loading ? '...' : mode === 'login' ? 'دخول' : mode === 'register' ? 'إنشاء حساب' : 'إرسال رابط استعادة المرور'}
             </button>
+
+            {mode === 'forgot_password' && (
+              <button 
+                type="button" 
+                onClick={() => setMode('login')} 
+                style={{ width: '100%', padding: '10px', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.9rem', fontFamily: 'var(--font-tajawal), sans-serif' }}
+              >
+                ← العودة لتسجيل الدخول
+              </button>
+            )}
           </form>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0' }}>
