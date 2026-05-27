@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 
 export default function Dashboard() {
-  const { user, userData, logout, isAdmin } = useAuth();
+  const { user, userData, logout, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
   const [tab, setTab] = useState<'services' | 'history'>('services');
   const [services, setServices] = useState<Service[]>([]);
@@ -27,8 +27,9 @@ export default function Dashboard() {
   const [whatsappNumber, setWhatsappNumber] = useState('');
 
   useEffect(() => {
-    if (!user) { router.push('/auth'); return; }
-  }, [user]);
+    if (!authLoading && !user) { router.push('/auth'); return; }
+  }, [user, authLoading]);
+
 
   // Real-time balance listener
   useEffect(() => {

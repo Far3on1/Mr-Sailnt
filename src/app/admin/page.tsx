@@ -19,7 +19,8 @@ import Link from 'next/link';
 type Tab = 'overview' | 'services' | 'users' | 'orders';
 
 export default function AdminPage() {
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, logout, loading: authLoading } = useAuth();
+
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('overview');
   const [services, setServices] = useState<Service[]>([]);
@@ -43,9 +44,11 @@ export default function AdminPage() {
   const [balanceSaving, setBalanceSaving] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) { router.push('/auth'); return; }
     if (!isAdmin) { router.push('/dashboard'); return; }
-  }, [user, isAdmin]);
+  }, [user, isAdmin, authLoading]);
+
 
   const loadData = async () => {
     setLoading(true);
