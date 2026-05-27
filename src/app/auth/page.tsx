@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Mail, Lock, User, Eye, EyeOff, Chrome } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
