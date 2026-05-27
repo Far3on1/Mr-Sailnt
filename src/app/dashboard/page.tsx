@@ -349,18 +349,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* History Tab */}
-          {tab === 'history' && (
-            <div>
-              <h2 className="section-title" style={{ marginBottom: '28px' }}>سجل المعاملات والطلبات</h2>
-n>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+
 
         {/* History Tab */}
         {tab === 'history' && (
@@ -418,6 +407,7 @@ n>
           </div>
         )}
       </div>
+    </div>
 
       {/* ===== PURCHASE INPUTS MODAL ===== */}
       {showOrderModal && selectedService && (
