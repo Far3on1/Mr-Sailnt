@@ -24,6 +24,7 @@ export default function AdminPage() {
 
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('overview');
+  const [menuOpen, setMenuOpen] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -268,41 +269,57 @@ export default function AdminPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', display: 'flex' }}>
-      {/* Sidebar */}
-      <div className="sidebar">
-        <div style={{ marginBottom: '8px', padding: '0 8px' }}>
-          <div className="navbar-logo" style={{ fontSize: '1.3rem' }}>Mr Sailnt</div>
-          <div className="badge-admin" style={{ display: 'inline-block', marginTop: '6px', fontSize: '0.7rem' }}>لوحة الأدمن</div>
-        </div>
-        <div style={{ height: '1px', background: 'var(--border)', margin: '16px 0' }} />
-
-        {([
-          { id: 'overview', icon: <LayoutDashboard size={18} />, label: 'نظرة عامة' },
-          { id: 'services', icon: <Package size={18} />, label: 'الخدمات' },
-          { id: 'users', icon: <Users size={18} />, label: 'المستخدمون' },
-          { id: 'orders', icon: <Wallet size={18} />, label: 'طلبات الخدمات' },
-          { id: 'deposits', icon: <Wallet size={18} />, label: 'طلبات الشحن' },
-          { id: 'settings', icon: <Settings size={18} />, label: 'إعدادات الدفع' },
-        ] as const).map(item => (
-          <div key={item.id} className={`sidebar-item ${tab === item.id ? 'active' : ''}`} onClick={() => setTab(item.id)}>
-            {item.icon} {item.label}
-          </div>
-        ))}
-
-        <div style={{ height: '1px', background: 'var(--border)', margin: '8px 0' }} />
-        <Link href="/" className="sidebar-item" style={{ textDecoration: 'none' }}>
-          <Home size={18} /> الرئيسية
-        </Link>
-        <div style={{ flex: 1 }} />
-        <button onClick={async () => { await logout(); router.push('/'); }}
-          className="sidebar-item" style={{ width: '100%', border: 'none', background: 'transparent', color: '#f87171', cursor: 'pointer', textAlign: 'right', marginTop: '16px' }}>
-          <LogOut size={18} /> خروج
+    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
+      
+      {/* Mobile Top Navigation Bar */}
+      <div className="mobile-header" style={{ display: 'none', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', zIndex: 110 }}>
+        <div className="navbar-logo" style={{ fontSize: '1.2rem' }}>Mr Sailnt (أدمن)</div>
+        <button 
+          onClick={() => setMenuOpen(!menuOpen)} 
+          style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+        >
+          <span style={{ fontSize: '1.8rem' }}>☰</span>
         </button>
       </div>
 
-      {/* Main */}
-      <div style={{ marginRight: '260px', flex: 1, padding: '40px 32px' }}>
+      <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
+        {/* Sidebar */}
+        <div className={`sidebar ${menuOpen ? 'show' : ''}`}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 8px' }}>
+            <div>
+              <div className="navbar-logo" style={{ fontSize: '1.3rem' }}>Mr Sailnt</div>
+              <div className="badge-admin" style={{ display: 'inline-block', marginTop: '6px', fontSize: '0.7rem' }}>لوحة الأدمن</div>
+            </div>
+            <button className="mobile-close" onClick={() => setMenuOpen(false)} style={{ display: 'none', background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
+          </div>
+          <div style={{ height: '1px', background: 'var(--border)', margin: '16px 0' }} />
+
+          {([
+            { id: 'overview', icon: <LayoutDashboard size={18} />, label: 'نظرة عامة' },
+            { id: 'services', icon: <Package size={18} />, label: 'الخدمات' },
+            { id: 'users', icon: <Users size={18} />, label: 'المستخدمون' },
+            { id: 'orders', icon: <Wallet size={18} />, label: 'طلبات الخدمات' },
+            { id: 'deposits', icon: <Wallet size={18} />, label: 'طلبات الشحن' },
+            { id: 'settings', icon: <Settings size={18} />, label: 'إعدادات الدفع' },
+          ] as const).map(item => (
+            <div key={item.id} className={`sidebar-item ${tab === item.id ? 'active' : ''}`} onClick={() => { setTab(item.id); setMenuOpen(false); }}>
+              {item.icon} {item.label}
+            </div>
+          ))}
+
+          <div style={{ height: '1px', background: 'var(--border)', margin: '8px 0' }} />
+          <Link href="/" className="sidebar-item" style={{ textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
+            <Home size={18} /> الرئيسية
+          </Link>
+          <div style={{ flex: 1 }} />
+          <button onClick={async () => { await logout(); router.push('/'); }}
+            className="sidebar-item" style={{ width: '100%', border: 'none', background: 'transparent', color: '#f87171', cursor: 'pointer', textAlign: 'right', marginTop: '16px' }}>
+            <LogOut size={18} /> خروج
+          </button>
+        </div>
+
+        {/* Main */}
+        <div className="main-content-layout" style={{ marginRight: '260px', flex: 1, padding: '40px 32px' }}>
         <h1 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '8px' }}>
           {tab === 'overview' ? 'نظرة عامة' : tab === 'services' ? 'إدارة الخدمات' : tab === 'users' ? 'إدارة المستخدمين' : tab === 'orders' ? 'إدارة طلبات الخدمات' : tab === 'deposits' ? 'إدارة طلبات الشحن' : 'إعدادات الدفع'}
         </h1>
@@ -642,6 +659,7 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+    </div>
 
 
       {/* ===== SERVICE MODAL ===== */}
