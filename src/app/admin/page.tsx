@@ -193,7 +193,76 @@ export default function AdminPage() {
   const totalBalance = users.reduce((s, u) => s + (u.balance || 0), 0);
   const purchaseTransactions = transactions.filter(t => t.type === 'purchase');
 
+  const [resending, setResending] = useState(false);
+  const { resendVerification } = useAuth();
+
+  const handleResendEmail = async () => {
+    setResending(true);
+    try {
+      await resendVerification();
+      toast.success('تم إعادة إرسال رابط التحقق إلى بريدك الإلكتروني ✉️');
+    } catch {
+      toast.error('فشل إرسال الرابط، حاول مجدداً لاحقاً');
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const handleRefreshVerification = async () => {
+    if (user) {
+      await user.reload();
+      if (user.emailVerified) {
+        toast.success('تم التحقق من بريدك الإلكتروني بنجاح! 🎉');
+        window.location.reload();
+      } else {
+        toast.error('لم يتم تفعيل الحساب بعد، يرجى الضغط على الرابط المرسل إلى بريدك');
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/');
+  };
+
   if (!isAdmin) return null;
+
+  if (user && !user.emailVerified) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', position: 'relative', overflow: 'hidden', width: '100%' }}>
+        <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%, -50%)', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(226,201,126,0.05) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
+        
+        <div style={{ width: '100%', maxWidth: '460px', position: 'relative', zIndex: 1, textAlign: 'center' }}>
+          <div className="navbar-logo" style={{ fontSize: '2.5rem', marginBottom: '8px' }}>Mr Sailnt</div>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', fontSize: '0.95rem' }}>تأكيد البريد الإلكتروني للمشرف</p>
+
+          <div className="glass-card" style={{ padding: '36px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ fontSize: '3rem' }}>✉️</div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>يرجى تفعيل حساب المشرف أولاً</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6' }}>
+              لقد أرسلنا رابط تحقق إلى بريدك الإلكتروني **{user.email}**. يرجى فتح البريد والضغط على الرابط لتفعيل حسابك.
+            </p>
+
+            <div className="divider" style={{ margin: '10px 0' }} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <button className="btn-gold" onClick={handleRefreshVerification} style={{ width: '100%', padding: '14px', fontSize: '1rem', fontWeight: 600 }}>
+                لقد قمت بالتفعيل (تحديث الصفحة)
+              </button>
+
+              <button className="btn-outline" onClick={handleResendEmail} disabled={resending} style={{ width: '100%', padding: '12px', fontSize: '0.9rem' }}>
+                {resending ? 'جاري الإرسال...' : 'إعادة إرسال رابط التحقق'}
+              </button>
+
+              <button className="btn-outline" onClick={handleLogout} style={{ width: '100%', padding: '12px', fontSize: '0.9rem', color: '#f87171', borderColor: 'rgba(248,113,113,0.2)' }}>
+                تسجيل الخروج
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', display: 'flex' }}>

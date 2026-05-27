@@ -10,6 +10,7 @@ import {
   GoogleAuthProvider,
   signOut,
   updateProfile,
+  sendEmailVerification,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -34,6 +35,7 @@ interface AuthContextType {
   registerWithEmail: (email: string, password: string, name: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
+  resendVerification: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -93,6 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const result = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(result.user, { displayName: name });
     await createUserDoc(result.user, { displayName: name });
+    await sendEmailVerification(result.user);
   };
 
   const loginWithGoogle = async () => {
@@ -105,10 +108,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signOut(auth);
   };
 
+  const resendVerification = async () => {
+    if (auth.currentUser) {
+      await sendEmailVerification(auth.currentUser);
+    }
+  };
+
   const isAdmin = userData?.role === 'admin' || user?.email === ADMIN_EMAIL;
 
   return (
-    <AuthContext.Provider value={{ user, userData, loading, isAdmin, loginWithEmail, registerWithEmail, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, userData, loading, isAdmin, loginWithEmail, registerWithEmail, loginWithGoogle, logout, resendVerification }}>
       {children}
     </AuthContext.Provider>
   );
