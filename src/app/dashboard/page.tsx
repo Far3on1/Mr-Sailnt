@@ -39,6 +39,7 @@ export default function Dashboard() {
     orangeCashNumber: '01201426302',
     instaPayNumber: '01201426302'
   });
+  const [showSpecialServices, setShowSpecialServices] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) { router.push('/auth'); return; }
@@ -279,7 +280,7 @@ export default function Dashboard() {
           <Link href="/" className="sidebar-item" style={{ textDecoration: 'none' }}>
             <Home size={18} /> الرئيسية
           </Link>
-          <div className={`sidebar-item ${tab === 'services' ? 'active' : ''}`} onClick={() => { setTab('services'); setMenuOpen(false); }}>
+          <div className={`sidebar-item ${tab === 'services' ? 'active' : ''}`} onClick={() => { setTab('services'); setShowSpecialServices(false); setMenuOpen(false); }}>
             <ShoppingBag size={18} /> الخدمات
           </div>
           <div className={`sidebar-item ${tab === 'deposit' ? 'active' : ''}`} onClick={() => { setTab('deposit'); setMenuOpen(false); }}>
@@ -332,41 +333,90 @@ export default function Dashboard() {
           {/* Services Tab */}
           {tab === 'services' && (
             <div>
-              <h2 className="section-title" style={{ marginBottom: '28px' }}>الخدمات المتاحة</h2>
-              {loading ? (
-                <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><div className="spinner" /></div>
-              ) : services.filter(s => s.isAvailable).length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>
-                  <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🔧</div>
-                  <p>لا توجد خدمات متاحة حالياً</p>
-                </div>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-                  {services.filter(s => s.isAvailable).map(service => (
-                    <div key={service.id} className="glass-card" style={{ padding: '24px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                        <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>{service.name}</h3>
-                        <span className="badge-available">متاح</span>
-                      </div>
-                      {service.description && (
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '16px' }}>{service.description}</p>
-                      )}
-                      <div className="divider" />
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
-                        <div style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1.3rem' }}>
-                          {service.price} <span style={{ fontSize: '0.75rem', fontWeight: 400 }}>ج.م</span>
-                        </div>
-                        <button
-                          className="btn-gold"
-                          style={{ padding: '8px 18px', fontSize: '0.9rem' }}
-                          disabled={buying === service.id || liveBalance < service.price}
-                          onClick={() => triggerBuyFlow(service)}
-                        >
-                          {buying === service.id ? '...' : liveBalance < service.price ? 'رصيد غير كافٍ' : 'اشتري'}
-                        </button>
+              {!showSpecialServices ? (
+                <div>
+                  <h2 className="section-title" style={{ marginBottom: '28px' }}>الأقسام المتاحة</h2>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
+                    <div 
+                      className="glass-card animate-fade-up" 
+                      onClick={() => setShowSpecialServices(true)}
+                      style={{ 
+                        padding: '40px 32px', 
+                        cursor: 'pointer', 
+                        textAlign: 'center', 
+                        border: '1px solid rgba(226,201,126,0.3)', 
+                        background: 'linear-gradient(135deg, rgba(226,201,126,0.08) 0%, rgba(0,0,0,0.2) 100%)',
+                        transition: 'all 0.3s ease',
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.transform = 'translateY(-5px)';
+                        e.currentTarget.style.borderColor = 'var(--gold)';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.transform = 'none';
+                        e.currentTarget.style.borderColor = 'rgba(226,201,126,0.3)';
+                      }}
+                    >
+                      <div style={{ fontSize: '3.5rem', marginBottom: '16px' }}>👑</div>
+                      <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--gold)', marginBottom: '12px' }}>خدمات خاصة</h3>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6' }}>
+                        اضغط هنا لاستعراض قائمة الخدمات الخاصة والحصرية وسحب البيانات المطلوبة.
+                      </p>
+                      <div style={{ marginTop: '24px', display: 'inline-block', padding: '10px 24px', borderRadius: '30px', background: 'var(--gold-dark)', color: '#0a0a0f', fontWeight: 700, fontSize: '0.85rem' }}>
+                        عرض الخدمات ←
                       </div>
                     </div>
-                  ))}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+                    <h2 className="section-title" style={{ margin: 0 }}>خدمات خاصة</h2>
+                    <button 
+                      className="btn-outline" 
+                      onClick={() => setShowSpecialServices(false)}
+                      style={{ padding: '8px 20px', fontSize: '0.9rem' }}
+                    >
+                      ← العودة للأقسام
+                    </button>
+                  </div>
+
+                  {loading ? (
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><div className="spinner" /></div>
+                  ) : services.filter(s => s.isAvailable).length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>
+                      <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🔧</div>
+                      <p>لا توجد خدمات خاصة متاحة حالياً</p>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                      {services.filter(s => s.isAvailable).map(service => (
+                        <div key={service.id} className="glass-card" style={{ padding: '24px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                            <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>{service.name}</h3>
+                            <span className="badge-available">متاح</span>
+                          </div>
+                          {service.description && (
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '16px' }}>{service.description}</p>
+                          )}
+                          <div className="divider" />
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
+                            <div style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1.3rem' }}>
+                              {service.price} <span style={{ fontSize: '0.75rem', fontWeight: 400 }}>ج.م</span>
+                            </div>
+                            <button
+                              className="btn-gold"
+                              style={{ padding: '8px 18px', fontSize: '0.9rem' }}
+                              disabled={buying === service.id || liveBalance < service.price}
+                              onClick={() => triggerBuyFlow(service)}
+                            >
+                              {buying === service.id ? '...' : liveBalance < service.price ? 'رصيد غير كافٍ' : 'اشتري'}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
