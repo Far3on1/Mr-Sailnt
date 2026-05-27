@@ -23,7 +23,23 @@ export default function Home() {
   }, []);
 
 
-  const availableServices = services.filter(s => s.isAvailable);
+  const availableServices = services
+    .filter(s => s.isAvailable && (!s.category || s.category === 'none'))
+    .sort((a, b) => {
+      const isNetA = a.name.toLowerCase().includes('فودافون') || 
+                     a.name.toLowerCase().includes('اورنج') || 
+                     a.name.toLowerCase().includes('أورنج') || 
+                     a.name.toLowerCase().includes('اتصالات') || 
+                     a.name.toLowerCase().includes('we') || 
+                     a.name.toLowerCase().split(/\s+/).includes('وي');
+      const isNetB = b.name.toLowerCase().includes('فودافون') || 
+                     b.name.toLowerCase().includes('اورنج') || 
+                     b.name.toLowerCase().includes('أورنج') || 
+                     b.name.toLowerCase().includes('اتصالات') || 
+                     b.name.toLowerCase().includes('we') || 
+                     b.name.toLowerCase().split(/\s+/).includes('وي');
+      return (isNetB ? 1 : 0) - (isNetA ? 1 : 0);
+    });
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', position: 'relative', overflow: 'hidden' }}>
@@ -126,7 +142,7 @@ export default function Home() {
       {/* SERVICES */}
       <section id="services" style={{ padding: '40px 24px 100px', maxWidth: '1100px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
         <div style={{ textAlign: 'center', marginBottom: '50px' }}>
-          <h2 className="section-title" style={{ fontSize: '2.2rem' }}>خدماتنا</h2>
+          <h2 className="section-title" style={{ fontSize: '2.2rem' }}>الخدمات الخاصة</h2>
           <p style={{ color: 'var(--text-secondary)', marginTop: '20px', fontSize: '1rem' }}>
             اختر من بين خدماتنا المتنوعة
           </p>
@@ -162,10 +178,19 @@ export default function Home() {
 
 // ---- Service Card Component ----
 function ServiceCard({ service, user, userData }: { service: Service; user: any; userData: any }) {
+  const nameLower = service.name.toLowerCase();
+  const catCode = nameLower.includes('فودافون') ? 'vodafone' :
+                  (nameLower.includes('اورنج') || nameLower.includes('أورنج')) ? 'orange' :
+                  nameLower.includes('اتصالات') ? 'etisalat' :
+                  (nameLower.includes('we') || nameLower.split(/\s+/).includes('وي')) ? 'we' : null;
+  const isCategory = catCode !== null;
+
   return (
     <div className="glass-card animate-fade-up" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <h3 style={{ fontSize: '1.15rem', fontWeight: 700, flex: 1 }}>{service.name}</h3>
+        <h3 style={{ fontSize: '1.15rem', fontWeight: 700, flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {isCategory ? '📁' : ''} {service.name}
+        </h3>
         <span className="badge-available">متاح</span>
       </div>
       {service.description && (
@@ -173,13 +198,23 @@ function ServiceCard({ service, user, userData }: { service: Service; user: any;
       )}
       <div className="divider" style={{ margin: '8px 0' }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>السعر</span>
-          <div style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1.4rem' }}>
-            {service.price} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>ج.م</span>
+        {!isCategory ? (
+          <div>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>السعر</span>
+            <div style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1.4rem' }}>
+              {service.price} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>ج.م</span>
+            </div>
           </div>
-        </div>
-        {user ? (
+        ) : (
+          <div />
+        )}
+        {isCategory ? (
+          <Link href={user ? `/dashboard?category=${catCode}` : '/auth'} style={{ textDecoration: 'none' }}>
+            <button className="btn-gold" style={{ padding: '10px 24px', fontSize: '0.9rem', fontWeight: 600 }}>
+              دخول
+            </button>
+          </Link>
+        ) : user ? (
           <Link href="/dashboard" style={{ textDecoration: 'none' }}>
             <button className="btn-gold" style={{ padding: '10px 20px', fontSize: '0.9rem' }}>
               اشتري الآن
