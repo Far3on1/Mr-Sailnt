@@ -128,6 +128,32 @@ export const purchaseService = async (
     note: `شراء خدمة: ${service.name} (دفع مباشر)`,
     createdAt: serverTimestamp(),
   });
+
+  // Send Telegram Notification to Admin
+  try {
+    const settings = await getPaymentSettings();
+    if (settings.telegramBotToken && settings.telegramChatId) {
+      const message = `🔔 طلب خدمة جديد!
+👤 العميل: ${displayName} (${userEmail})
+🛠 الخدمة: ${service.name}
+💰 السعر: ${service.price} ج.م
+🎯 الرقم المطلوب: ${targetNumber}
+📞 واتساب للتواصل: ${whatsappNumber}
+💵 طريقة الدفع: ${paymentMethod === 'orange_cash' ? 'فودافون/أورنج كاش' : 'انستاباي'}
+📱 حساب المحول منه: ${senderPhone}`;
+
+      await fetch(`https://api.telegram.org/bot${settings.telegramBotToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: settings.telegramChatId,
+          text: message,
+        }),
+      });
+    }
+  } catch (e) {
+    console.error('Error sending Telegram notification:', e);
+  }
 };
 
 export const getAllTransactions = async (): Promise<TransactionRecord[]> => {
@@ -208,6 +234,8 @@ export const rejectDepositRequest = async (requestId: string) => {
 export interface PaymentSettings {
   orangeCashNumber: string;
   instaPayNumber: string;
+  telegramBotToken?: string;
+  telegramChatId?: string;
 }
 
 export const getPaymentSettings = async (): Promise<PaymentSettings> => {
@@ -218,6 +246,8 @@ export const getPaymentSettings = async (): Promise<PaymentSettings> => {
       return {
         orangeCashNumber: data.orangeCashNumber || '01201426302',
         instaPayNumber: data.instaPayNumber || '01201426302',
+        telegramBotToken: data.telegramBotToken || '',
+        telegramChatId: data.telegramChatId || '',
       };
     }
   } catch (e) {
@@ -226,6 +256,8 @@ export const getPaymentSettings = async (): Promise<PaymentSettings> => {
   return {
     orangeCashNumber: '01201426302',
     instaPayNumber: '01201426302',
+    telegramBotToken: '',
+    telegramChatId: '',
   };
 };
 

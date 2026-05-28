@@ -53,6 +53,8 @@ export default function AdminPage() {
   // Payment Settings State
   const [orangeCashNumber, setOrangeCashNumber] = useState('01201426302');
   const [instaPayNumber, setInstaPayNumber] = useState('01201426302');
+  const [telegramBotToken, setTelegramBotToken] = useState('');
+  const [telegramChatId, setTelegramChatId] = useState('');
   const [settingsSaving, setSettingsSaving] = useState(false);
 
   useEffect(() => {
@@ -78,6 +80,8 @@ export default function AdminPage() {
     setDepositRequests(deps);
     setOrangeCashNumber(settings.orangeCashNumber);
     setInstaPayNumber(settings.instaPayNumber);
+    setTelegramBotToken(settings.telegramBotToken || '');
+    setTelegramChatId(settings.telegramChatId || '');
     setLoading(false);
   };
 
@@ -87,8 +91,13 @@ export default function AdminPage() {
     }
     setSettingsSaving(true);
     try {
-      await updatePaymentSettings({ orangeCashNumber, instaPayNumber });
-      toast.success('تم حفظ إعدادات الدفع بنجاح ✅');
+      await updatePaymentSettings({
+        orangeCashNumber,
+        instaPayNumber,
+        telegramBotToken,
+        telegramChatId
+      });
+      toast.success('تم حفظ الإعدادات بنجاح ✅');
     } catch {
       toast.error('حدث خطأ أثناء حفظ الإعدادات');
     } finally {
@@ -544,6 +553,45 @@ export default function AdminPage() {
                   placeholder="مثال: username@instapay أو رقم هاتف"
                   required
                 />
+              </div>
+
+              <div className="divider" style={{ margin: '10px 0' }} />
+
+              <div style={{ border: '1px dashed var(--border)', borderRadius: '12px', padding: '16px', background: 'rgba(226,201,126,0.02)' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--gold)', marginBottom: '14px' }}>🔔 إشعارات طلبات الخدمة الجديدة (تليجرام)</h3>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
+                      رمز البوت Telegram Bot Token
+                    </label>
+                    <input 
+                      className="input-gold" 
+                      type="text" 
+                      value={telegramBotToken} 
+                      onChange={e => setTelegramBotToken(e.target.value)} 
+                      placeholder="مثال: 123456789:ABCdefGhIJKlmNoPQRsT..."
+                      style={{ fontSize: '0.85rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
+                      معرف شات الأدمن Telegram Chat ID
+                    </label>
+                    <input 
+                      className="input-gold" 
+                      type="text" 
+                      value={telegramChatId} 
+                      onChange={e => setTelegramChatId(e.target.value)} 
+                      placeholder="مثال: 987654321 أو معرف المجموعة"
+                      style={{ fontSize: '0.85rem' }}
+                    />
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
+                      نصيحة: يمكنك الحصول عليه بإرسال رسالة للبوت @userinfobot أو إضافته لمجموعة واستخدام معرف المجموعة.
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <div style={{ marginTop: '12px' }}>

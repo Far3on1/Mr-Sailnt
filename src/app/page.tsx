@@ -149,6 +149,51 @@ export default function Home() {
         </div>
       </section>
 
+      {/* HOW IT WORKS & TELEGRAM BOT */}
+      <section style={{ padding: '40px 24px 60px', maxWidth: '1100px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px', alignItems: 'stretch' }}>
+          
+          {/* How It Works List */}
+          <div className="glass-card" style={{ padding: '32px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '24px', color: 'var(--text-primary)' }}>💡 كيف يعمل الموقع؟</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {[
+                { step: '1', title: 'اختر خدمتك', desc: 'تصفح قائمة الخدمات واختر الخدمة المطلوبة.' },
+                { step: '2', title: 'حول التكلفة', desc: 'قم بنسخ رقم التحويل (فودافون كاش أو انستاباي) وأرسل قيمة الخدمة.' },
+                { step: '3', title: 'املأ البيانات وأرسل الطلب', desc: 'اكتب الرقم المطلوب وتفاصيل المحول منه وارفع إثبات التحويل.' }
+              ].map((item, index) => (
+                <div key={index} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                  <div style={{ background: 'var(--gold)', color: 'var(--bg-primary)', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '1.05rem', flexShrink: 0 }}>
+                    {item.step}
+                  </div>
+                  <div>
+                    <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '4px' }}>{item.title}</h4>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6' }}>{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Telegram Bot Promo */}
+          <div className="glass-card" style={{ padding: '32px', border: '1px solid rgba(226,201,126,0.15)', background: 'linear-gradient(135deg, rgba(226,201,126,0.02) 0%, rgba(226,201,126,0.06) 100%)', display: 'flex', flexDirection: 'column', gap: '20px', justifyContent: 'center' }}>
+            <div style={{ fontSize: '2.5rem' }}>🤖</div>
+            <h3 style={{ fontSize: '1.4rem', fontWeight: 800 }}>هل تفضل استخدام تليجرام؟</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.7' }}>
+              نوفر لك بوت تليجرام تفاعلي وسريع يقدم نفس الخدمات تماماً! يمكنك تقديم الطلبات وتتبعها، والتواصل مع الدعم الفني مباشرة من داخل تطبيق تليجرام.
+            </p>
+            <div style={{ marginTop: '8px' }}>
+              <a href="https://t.me/MrSailnt_Bot" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                <button className="btn-gold" style={{ padding: '12px 28px', fontSize: '0.95rem', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  💬 افتح بوت التليجرام: @MrSailnt_Bot
+                </button>
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
       {/* SERVICES */}
       <section id="services" style={{ padding: '40px 24px 100px', maxWidth: '1100px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
         <div style={{ textAlign: 'center', marginBottom: '50px' }}>

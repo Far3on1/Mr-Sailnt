@@ -41,6 +41,10 @@ export default function Dashboard() {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [targetNumber, setTargetNumber] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
+  
+  // Transaction History Search & Filter State
+  const [historySearch, setHistorySearch] = useState('');
+  const [historyStatusFilter, setHistoryStatusFilter] = useState<'all' | 'pending' | 'in_progress' | 'completed'>('all');
 
   // Deposit Form State
   const [depositAmount, setDepositAmount] = useState('');
@@ -346,6 +350,19 @@ export default function Dashboard() {
             <p style={{ color: 'var(--text-secondary)', marginTop: '6px' }}>مرحباً بك في لوحة التحكم</p>
           </div>
 
+          {(() => {
+            const pendingCount = transactions.filter((t: any) => t.type === 'purchase' && t.status === 'pending').length;
+            if (pendingCount === 0) return null;
+            return (
+              <div className="glass-card animate-fade-up" style={{ padding: '16px 20px', border: '1px solid rgba(226,201,126,0.2)', background: 'rgba(226,201,126,0.03)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                <span style={{ fontSize: '1.3rem' }}>⏳</span>
+                <div style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 500 }}>
+                  لديك <strong style={{ color: 'var(--gold)' }}>{pendingCount}</strong> طلبات قيد المراجعة حالياً. سيتم تنفيذها قريباً والتواصل معك عبر الواتساب.
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '36px' }}>
             <div className="stat-card">
@@ -436,55 +453,98 @@ export default function Dashboard() {
         {tab === 'history' && (
           <div>
             <h2 className="section-title" style={{ marginBottom: '28px' }}>سجل المعاملات والطلبات</h2>
-            {transactions.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📋</div>
-                <p>لا توجد معاملات بعد</p>
-              </div>
-            ) : (
-              <div className="glass-card" style={{ overflow: 'hidden' }}>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>النوع</th>
-                      <th>التفاصيل</th>
-                      <th>المبلغ</th>
-                      <th>الحالة</th>
-                      <th>التاريخ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {transactions.map((tx: any) => (
-                      <tr key={tx.id}>
-                        <td>
-                          {tx.type === 'credit'
-                            ? <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><CheckCircle size={16} color="#4ade80" /> شحن رصيد</span>
-                            : <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><ShoppingBag size={16} color="var(--gold)" /> شراء خدمة</span>
-                          }
-                        </td>
-                        <td>
-                          <div>{tx.note}</div>
-                          {tx.targetNumber && (
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                              رقم المستهدف: {tx.targetNumber} | واتساب: {tx.whatsappNumber}
-                            </div>
-                          )}
-                        </td>
-                        <td style={{ color: tx.type === 'credit' ? '#4ade80' : '#f87171', fontWeight: 700 }}>
-                          {tx.type === 'credit' ? '+' : ''}{tx.amount} ج.م
-                        </td>
-                        <td>
-                          {tx.type === 'purchase' ? getStatusBadge(tx.status) : <span style={{ color: '#4ade80', fontSize: '0.8rem' }}>مكتمل</span>}
-                        </td>
-                        <td style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-                          {tx.createdAt?.seconds ? new Date(tx.createdAt.seconds * 1000).toLocaleDateString('ar-EG') : '-'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            {(() => {
+              const filtered = transactions.filter((tx: any) => {
+                const matchesSearch = !historySearch || 
+                  (tx.serviceName || '').toLowerCase().includes(historySearch.toLowerCase()) || 
+                  (tx.targetNumber || '').includes(historySearch) ||
+                  (tx.note || '').toLowerCase().includes(historySearch.toLowerCase());
+                
+                const matchesStatus = historyStatusFilter === 'all' || tx.status === historyStatusFilter;
+                return matchesSearch && matchesStatus;
+              });
+
+              if (transactions.length === 0) {
+                return (
+                  <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📋</div>
+                    <p>لا توجد معاملات بعد</p>
+                  </div>
+                );
+              }
+
+              return (
+                <div>
+                  {/* Search and Filters */}
+                  <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                    <input 
+                      className="input-gold" 
+                      placeholder="🔍 ابحث باسم الخدمة أو الرقم المطلوب..." 
+                      value={historySearch} 
+                      onChange={e => setHistorySearch(e.target.value)} 
+                      style={{ flex: 2, minWidth: '200px', padding: '10px 16px', fontSize: '0.9rem' }}
+                    />
+                    <select 
+                      className="input-gold" 
+                      value={historyStatusFilter} 
+                      onChange={e => setHistoryStatusFilter(e.target.value as any)} 
+                      style={{ flex: 1, minWidth: '150px', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)', padding: '10px', borderRadius: '10px', fontFamily: 'var(--font-tajawal), sans-serif' }}
+                    >
+                      <option value="all">كل الحالات</option>
+                      <option value="pending">قيد المراجعة</option>
+                      <option value="in_progress">جاري العمل</option>
+                      <option value="completed">تم التسليم</option>
+                    </select>
+                  </div>
+
+                  <div className="glass-card" style={{ overflow: 'hidden' }}>
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>النوع</th>
+                          <th>التفاصيل</th>
+                          <th>المبلغ</th>
+                          <th>الحالة</th>
+                          <th>التاريخ</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filtered.map((tx: any) => (
+                          <tr key={tx.id}>
+                            <td>
+                              {tx.type === 'credit'
+                                ? <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><CheckCircle size={16} color="#4ade80" /> شحن رصيد</span>
+                                : <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><ShoppingBag size={16} color="var(--gold)" /> شراء خدمة</span>
+                              }
+                            </td>
+                            <td>
+                              <div>{tx.note}</div>
+                              {tx.targetNumber && (
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                                  رقم المستهدف: {tx.targetNumber} | واتساب: {tx.whatsappNumber}
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ color: tx.type === 'credit' ? '#4ade80' : '#f87171', fontWeight: 700 }}>
+                              {tx.type === 'credit' ? '+' : ''}{tx.amount} ج.م
+                            </td>
+                            <td>
+                              {tx.type === 'purchase' ? getStatusBadge(tx.status) : <span style={{ color: '#4ade80', fontSize: '0.8rem' }}>مكتمل</span>}
+                            </td>
+                            <td style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                              {tx.createdAt?.seconds ? new Date(tx.createdAt.seconds * 1000).toLocaleDateString('ar-EG') : '-'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {filtered.length === 0 && (
+                      <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>لا توجد نتائج تطابق بحثك</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>
