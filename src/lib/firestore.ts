@@ -129,7 +129,7 @@ export const purchaseService = async (
     createdAt: serverTimestamp(),
   });
 
-  // Send Telegram Notification to Admin
+  // Send Telegram Notification to Admin via serverless route handler (bypasses CORS)
   try {
     const settings = await getPaymentSettings();
     if (settings.telegramBotToken && settings.telegramChatId) {
@@ -142,51 +142,16 @@ export const purchaseService = async (
 💵 طريقة الدفع: ${paymentMethod === 'orange_cash' ? 'فودافون/أورنج كاش' : 'انستاباي'}
 📱 حساب المحول منه: ${senderPhone}`;
 
-      // Helper to convert base64 to Blob for Telegram upload
-      const base64ToBlob = (base64Str: string) => {
-        const parts = base64Str.split(',');
-        const byteString = atob(parts[1]);
-        const mimeString = parts[0].split(':')[1].split(';')[0];
-        const ab = new ArrayBuffer(byteString.length);
-        const ia = new Uint8Array(ab);
-        for (let i = 0; i < byteString.length; i++) {
-          ia[i] = byteString.charCodeAt(i);
-        }
-        return new Blob([ab], { type: mimeString });
-      };
-
-      let sent = false;
-      if (receiptImage && receiptImage.startsWith('data:image')) {
-        try {
-          const formData = new FormData();
-          formData.append('chat_id', settings.telegramChatId);
-          formData.append('caption', message);
-          const imageBlob = base64ToBlob(receiptImage);
-          formData.append('photo', imageBlob, 'receipt.jpg');
-
-          const res = await fetch(`https://api.telegram.org/bot${settings.telegramBotToken}/sendPhoto`, {
-            method: 'POST',
-            body: formData,
-          });
-          if (res.ok) {
-            sent = true;
-          }
-        } catch (err) {
-          console.error('Error sending Telegram photo:', err);
-        }
-      }
-
-      if (!sent) {
-        // Fallback to text message if sendPhoto failed or was skipped
-        await fetch(`https://api.telegram.org/bot${settings.telegramBotToken}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: settings.telegramChatId,
-            text: message,
-          }),
-        });
-      }
+      await fetch('/api/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          botToken: settings.telegramBotToken,
+          chatId: settings.telegramChatId,
+          message: message,
+          receiptImage: receiptImage,
+        }),
+      });
     }
   } catch (e) {
     console.error('Error sending Telegram notification:', e);
