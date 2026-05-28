@@ -55,6 +55,8 @@ export default function AdminPage() {
   const [instaPayNumber, setInstaPayNumber] = useState('01201426302');
   const [telegramBotToken, setTelegramBotToken] = useState('');
   const [telegramChatId, setTelegramChatId] = useState('');
+  const [fcmServerKey, setFcmServerKey] = useState('');
+  const [fcmVapidKey, setFcmVapidKey] = useState('');
   const [settingsSaving, setSettingsSaving] = useState(false);
 
   useEffect(() => {
@@ -82,6 +84,8 @@ export default function AdminPage() {
     setInstaPayNumber(settings.instaPayNumber);
     setTelegramBotToken(settings.telegramBotToken || '');
     setTelegramChatId(settings.telegramChatId || '');
+    setFcmServerKey(settings.fcmServerKey || '');
+    setFcmVapidKey(settings.fcmVapidKey || '');
     setLoading(false);
   };
 
@@ -95,7 +99,9 @@ export default function AdminPage() {
         orangeCashNumber,
         instaPayNumber,
         telegramBotToken,
-        telegramChatId
+        telegramChatId,
+        fcmServerKey,
+        fcmVapidKey
       });
       toast.success('تم حفظ الإعدادات بنجاح ✅');
     } catch {
@@ -105,7 +111,50 @@ export default function AdminPage() {
     }
   };
 
-  useEffect(() => { if (isAdmin) loadData(); }, [isAdmin]);
+  useEffect(() => {
+    if (isAdmin) loadData();
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (!isAdmin || !user) return;
+
+    const setupPush = async () => {
+      try {
+        if (typeof window === 'undefined' || !('Notification' in window)) return;
+        let permission = Notification.permission;
+        if (permission === 'default') {
+          permission = await Notification.requestPermission();
+        }
+
+        if (permission === 'granted') {
+          const { getMessaging, getToken } = await import('firebase/messaging');
+          const app = (await import('@/lib/firebase')).default;
+          const settings = await getPaymentSettings();
+
+          if (settings.fcmVapidKey) {
+            const swUrl = `/firebase-messaging-sw.js?apiKey=${encodeURIComponent(process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '')}&authDomain=${encodeURIComponent(process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '')}&projectId=${encodeURIComponent(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '')}&storageBucket=${encodeURIComponent(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '')}&messagingSenderId=${encodeURIComponent(process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '')}&appId=${encodeURIComponent(process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '')}`;
+
+            const registration = await navigator.serviceWorker.register(swUrl);
+            const messaging = getMessaging(app);
+            const token = await getToken(messaging, {
+              vapidKey: settings.fcmVapidKey,
+              serviceWorkerRegistration: registration,
+            });
+
+            if (token) {
+              const { saveAdminPushToken } = await import('@/lib/firestore');
+              await saveAdminPushToken(user.uid, token);
+              console.log('FCM Device Token registered successfully:', token);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error setting up push notifications:', err);
+      }
+    };
+
+    setupPush();
+  }, [isAdmin, user]);
 
   // ---- Service CRUD ----
   const openAddService = () => {
@@ -590,6 +639,42 @@ export default function AdminPage() {
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
                       نصيحة: يمكنك الحصول عليه بإرسال رسالة للبوت @userinfobot أو إضافته لمجموعة واستخدام معرف المجموعة.
                     </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="divider" style={{ margin: '10px 0' }} />
+
+              <div style={{ border: '1px dashed var(--border)', borderRadius: '12px', padding: '16px', background: 'rgba(226,201,126,0.02)' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--gold)', marginBottom: '14px' }}>🔔 إشعارات المتصفح في الخلفية (FCM)</h3>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
+                      مفتاح خادم FCM Server Key (Legacy)
+                    </label>
+                    <input 
+                      className="input-gold" 
+                      type="password" 
+                      value={fcmServerKey} 
+                      onChange={e => setFcmServerKey(e.target.value)} 
+                      placeholder="مثال: AAAAbm_abc123:APA91b..."
+                      style={{ fontSize: '0.85rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
+                      مفتاح Web Push VAPID Key
+                    </label>
+                    <input 
+                      className="input-gold" 
+                      type="text" 
+                      value={fcmVapidKey} 
+                      onChange={e => setFcmVapidKey(e.target.value)} 
+                      placeholder="مفتاح الـ VAPID الطويل من قسم Cloud Messaging"
+                      style={{ fontSize: '0.85rem' }}
+                    />
                   </div>
                 </div>
               </div>

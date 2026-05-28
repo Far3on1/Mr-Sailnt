@@ -165,6 +165,28 @@ export const purchaseService = async (
         });
       }
     }
+
+    // Send background Push Notification to Admin via Firebase Cloud Messaging
+    try {
+      const settings = await getPaymentSettings();
+      if (settings.fcmServerKey) {
+        const tokens = await getAdminPushTokens();
+        if (tokens.length > 0) {
+          await fetch('/api/push', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              serverKey: settings.fcmServerKey,
+              tokens: tokens,
+              title: 'طلب خدمة جديد 🔔',
+              body: `العميل ${displayName} طلب خدمة "${service.name}"`,
+            }),
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Error triggering FCM push:', err);
+    }
   } catch (e) {
     console.error('Error sending Telegram notification:', e);
   }
@@ -250,6 +272,8 @@ export interface PaymentSettings {
   instaPayNumber: string;
   telegramBotToken?: string;
   telegramChatId?: string;
+  fcmServerKey?: string;
+  fcmVapidKey?: string;
 }
 
 export const getPaymentSettings = async (): Promise<PaymentSettings> => {
@@ -262,6 +286,8 @@ export const getPaymentSettings = async (): Promise<PaymentSettings> => {
         instaPayNumber: data.instaPayNumber || '01201426302',
         telegramBotToken: data.telegramBotToken || '',
         telegramChatId: data.telegramChatId || '',
+        fcmServerKey: data.fcmServerKey || '',
+        fcmVapidKey: data.fcmVapidKey || '',
       };
     }
   } catch (e) {
@@ -272,11 +298,26 @@ export const getPaymentSettings = async (): Promise<PaymentSettings> => {
     instaPayNumber: '01201426302',
     telegramBotToken: '',
     telegramChatId: '',
+    fcmServerKey: '',
+    fcmVapidKey: '',
   };
 };
 
 export const updatePaymentSettings = async (settings: PaymentSettings) => {
   await setDoc(doc(db, 'settings', 'payment'), settings);
+};
+
+// =================== ADMIN PUSH TOKENS ===================
+export const saveAdminPushToken = async (adminUid: string, token: string) => {
+  await setDoc(doc(db, 'admin_push_tokens', adminUid), {
+    token,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+export const getAdminPushTokens = async (): Promise<string[]> => {
+  const snap = await getDocs(collection(db, 'admin_push_tokens'));
+  return snap.docs.map(d => d.data().token).filter(t => !!t);
 };
 
 
