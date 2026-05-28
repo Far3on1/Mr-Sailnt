@@ -105,24 +105,27 @@ export const purchaseService = async (
   userEmail: string,
   displayName: string,
   service: Service,
-  userBalance: number,
   targetNumber: string,
-  whatsappNumber: string
+  whatsappNumber: string,
+  senderPhone: string,
+  receiptImage: string,
+  paymentMethod: string
 ) => {
-  if (userBalance < service.price) throw new Error('الرصيد غير كافٍ');
-  await updateDoc(doc(db, 'users', uid), { balance: increment(-service.price) });
   await addDoc(collection(db, 'transactions'), {
     userId: uid,
     userEmail,
     displayName,
     type: 'purchase',
-    amount: -service.price,
+    amount: service.price,
     serviceId: service.id,
     serviceName: service.name,
     targetNumber,
     whatsappNumber,
+    senderPhone,
+    receiptImage,
+    paymentMethod,
     status: 'pending',
-    note: `شراء خدمة: ${service.name}`,
+    note: `شراء خدمة: ${service.name} (دفع مباشر)`,
     createdAt: serverTimestamp(),
   });
 };

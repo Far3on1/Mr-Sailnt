@@ -297,9 +297,7 @@ export default function AdminPage() {
           {([
             { id: 'overview', icon: <LayoutDashboard size={18} />, label: 'نظرة عامة' },
             { id: 'services', icon: <Package size={18} />, label: 'الخدمات' },
-            { id: 'users', icon: <Users size={18} />, label: 'المستخدمون' },
             { id: 'orders', icon: <Wallet size={18} />, label: 'طلبات الخدمات' },
-            { id: 'deposits', icon: <Wallet size={18} />, label: 'طلبات الشحن' },
             { id: 'settings', icon: <Settings size={18} />, label: 'إعدادات الدفع' },
           ] as const).map(item => (
             <div key={item.id} className={`sidebar-item ${tab === item.id ? 'active' : ''}`} onClick={() => { setTab(item.id); setMenuOpen(false); }}>
@@ -321,10 +319,10 @@ export default function AdminPage() {
         {/* Main */}
         <div className="main-content-layout" style={{ marginRight: '260px', flex: 1, padding: '40px 32px' }}>
         <h1 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '8px' }}>
-          {tab === 'overview' ? 'نظرة عامة' : tab === 'services' ? 'إدارة الخدمات' : tab === 'users' ? 'إدارة المستخدمين' : tab === 'orders' ? 'إدارة طلبات الخدمات' : tab === 'deposits' ? 'إدارة طلبات الشحن' : 'إعدادات الدفع'}
+          {tab === 'overview' ? 'نظرة عامة' : tab === 'services' ? 'إدارة الخدمات' : tab === 'orders' ? 'إدارة طلبات الخدمات' : 'إعدادات الدفع'}
         </h1>
         <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', fontSize: '0.9rem' }}>
-          {tab === 'overview' ? 'إحصائيات الموقع' : tab === 'services' ? 'أضف وعدّل وأوقف الخدمات' : tab === 'users' ? 'إدارة أرصدة وحسابات المستخدمين' : tab === 'orders' ? 'تابع طلبات الخدمات وتواصل مع العملاء' : tab === 'deposits' ? 'مراجعة طلبات شحن المحفظة المالية' : 'تحديث أرقام وعناوين تحويل الأموال'}
+          {tab === 'overview' ? 'إحصائيات الموقع' : tab === 'services' ? 'أضف وعدّل وأوقف الخدمات' : tab === 'orders' ? 'تابع طلبات الخدمات وتواصل مع العملاء والتحقق من تحويلاتهم' : 'تحديث أرقام وعناوين تحويل الأموال'}
         </p>
 
         {/* ===== OVERVIEW ===== */}
@@ -407,44 +405,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ===== USERS ===== */}
-        {tab === 'users' && (
-          <div>
-            {loading ? (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><div className="spinner" /></div>
-            ) : (
-              <div className="glass-card" style={{ overflow: 'hidden' }}>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>الاسم</th>
-                      <th>الإيميل</th>
-                      <th>الرصيد</th>
-                      <th>شحن رصيد</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map(u => (
-                      <tr key={u.uid}>
-                        <td style={{ fontWeight: 600 }}>{u.displayName}</td>
-                        <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{u.email}</td>
-                        <td style={{ color: 'var(--gold)', fontWeight: 700 }}>{(u.balance || 0).toFixed(2)} ج.م</td>
-                        <td>
-                          <button onClick={() => openBalance(u)} className="btn-gold" style={{ padding: '7px 16px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <Wallet size={15} /> شحن
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {users.length === 0 && (
-                  <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>لا يوجد مستخدمون مسجلون بعد</div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Users tab removed */}
 
         {/* ===== ORDERS ===== */}
         {tab === 'orders' && (
@@ -459,6 +420,9 @@ export default function AdminPage() {
                       <th>العميل</th>
                       <th>الخدمة المطلوبة</th>
                       <th>الرقم المطلوب</th>
+                      <th>طريقة الدفع</th>
+                      <th>الرقم المحول منه</th>
+                      <th>الإثبات (الوصل)</th>
                       <th>التواصل والواتساب</th>
                       <th>التاريخ</th>
                       <th>الحالة الحالية</th>
@@ -469,11 +433,32 @@ export default function AdminPage() {
                     {purchaseTransactions.map(tx => (
                       <tr key={tx.id}>
                         <td>
-                          <div style={{ fontWeight: 600 }}>{tx.displayName || 'مستحدم'}</div>
+                          <div style={{ fontWeight: 600 }}>{tx.displayName || 'مستخدم'}</div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{tx.userEmail}</div>
                         </td>
                         <td style={{ color: 'var(--gold)', fontWeight: 600 }}>{tx.serviceName}</td>
                         <td style={{ fontWeight: 'bold' }}>{tx.targetNumber || '-'}</td>
+                        <td>
+                          {tx.paymentMethod === 'instapay' ? (
+                            <span style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>انستاباي</span>
+                          ) : tx.paymentMethod === 'orange_cash' ? (
+                            <span style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--gold)', border: '1px solid rgba(226,201,126,0.2)', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>كاش</span>
+                          ) : (
+                            <span style={{ color: 'var(--text-secondary)' }}>-</span>
+                          )}
+                        </td>
+                        <td style={{ fontWeight: 'bold' }}>{tx.senderPhone || '-'}</td>
+                        <td>
+                          {tx.receiptImage ? (
+                            <button 
+                              className="btn-outline" 
+                              style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                              onClick={() => setActiveScreenshot(tx.receiptImage)}
+                            >
+                              عرض الوصل 🖼️
+                            </button>
+                          ) : 'لا يوجد'}
+                        </td>
                         <td>
                           {tx.whatsappNumber ? (
                             <a
@@ -525,92 +510,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* ===== DEPOSITS TAB ===== */}
-        {tab === 'deposits' && (
-          <div>
-            {loading ? (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><div className="spinner" /></div>
-            ) : (
-              <div className="glass-card" style={{ overflow: 'hidden' }}>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>العميل</th>
-                      <th>طريقة الشحن</th>
-                      <th>المبلغ</th>
-                      <th>الرقم / الحساب المحول منه</th>
-                      <th>الإثبات (الوصل)</th>
-                      <th>التاريخ</th>
-                      <th>الحالة</th>
-                      <th>الإجراءات</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {depositRequests.map(req => (
-                      <tr key={req.id}>
-                        <td>
-                          <div style={{ fontWeight: 600 }}>{req.displayName}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{req.userEmail}</div>
-                        </td>
-                        <td>
-                          {req.method === 'instapay' ? (
-                            <span style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>انستاباي</span>
-                          ) : (
-                            <span style={{ background: 'rgba(234,179,8,0.1)', color: 'var(--gold)', border: '1px solid rgba(226,201,126,0.2)', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>أورنج كاش</span>
-                          )}
-                        </td>
-                        <td style={{ color: 'var(--gold)', fontWeight: 700 }}>{req.amount} ج.م</td>
-                        <td style={{ fontWeight: 'bold' }}>{req.senderPhone}</td>
-                        <td>
-                          {req.receiptImage ? (
-                            <button 
-                              className="btn-outline" 
-                              style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-                              onClick={() => setActiveScreenshot(req.receiptImage)}
-                            >
-                              عرض الإسكرين 🖼️
-                            </button>
-                          ) : 'لا توجد صورة'}
-                        </td>
-                        <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                          {req.createdAt?.seconds ? new Date(req.createdAt.seconds * 1000).toLocaleString('ar-EG') : '-'}
-                        </td>
-                        <td>
-                          {req.status === 'pending' && <span style={{ background: 'rgba(234,179,8,0.1)', color: '#eab308', border: '1px solid rgba(234,179,8,0.2)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>قيد المراجعة</span>}
-                          {req.status === 'approved' && <span style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>تم الشحن ✅</span>}
-                          {req.status === 'rejected' && <span style={{ background: 'rgba(220,38,38,0.1)', color: '#f87171', border: '1px solid rgba(220,38,38,0.2)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>مرفوض ❌</span>}
-                        </td>
-                        <td>
-                          {req.status === 'pending' ? (
-                            <div style={{ display: 'flex', gap: '6px' }}>
-                              <button 
-                                onClick={() => handleApproveDeposit(req.id, req.userId, req.amount, req.userEmail)}
-                                style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '8px', cursor: 'pointer', background: 'rgba(34,197,94,0.15)', border: '1px solid #22c55e', color: '#22c55e', fontWeight: 600 }}
-                              >
-                                قبول
-                              </button>
-                              <button 
-                                onClick={() => handleRejectDeposit(req.id)}
-                                style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '8px', cursor: 'pointer', background: 'rgba(220,38,38,0.15)', border: '1px solid #dc2626', color: '#f87171' }}
-                              >
-                                رفض
-                              </button>
-                            </div>
-                          ) : (
-                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>مكتمل</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {depositRequests.length === 0 && (
-                  <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>لا توجد طلبات شحن بعد</div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Deposits tab removed */}
 
         {/* ===== SETTINGS TAB ===== */}
         {tab === 'settings' && (

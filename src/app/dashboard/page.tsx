@@ -85,13 +85,11 @@ export default function Dashboard() {
   }, []);
 
   const triggerBuyFlow = (service: Service) => {
-    if (liveBalance < service.price) {
-      toast.error('رصيدك غير كافٍ لشراء هذه الخدمة');
-      return;
-    }
     setSelectedService(service);
     setTargetNumber('');
     setWhatsappNumber('');
+    setDepositSender('');
+    setDepositReceipt('');
     setShowOrderModal(true);
   };
 
@@ -99,6 +97,8 @@ export default function Dashboard() {
     if (!user || !selectedService) return;
     if (!targetNumber.trim()) return toast.error('يرجى كتابة الرقم المطلوب');
     if (!whatsappNumber.trim()) return toast.error('يرجى كتابة رقم الواتساب');
+    if (!depositSender.trim()) return toast.error('يرجى كتابة رقم/حساب المحول منه');
+    if (!depositReceipt) return toast.error('يرجى إرفاق صورة إثبات التحويل');
 
     const isNationalIdService = selectedService.name.includes('الرقم القومي') || selectedService.name.includes('تموين') || selectedService.category === 'civil';
     if (isNationalIdService && !/^\d{14}$/.test(targetNumber.trim())) {
@@ -113,11 +113,13 @@ export default function Dashboard() {
         user.email || '',
         userData?.displayName || 'مستخدم',
         selectedService,
-        liveBalance,
         targetNumber,
-        whatsappNumber
+        whatsappNumber,
+        depositSender,
+        depositReceipt,
+        depositMethod
       );
-      toast.success(`تم إرسال طلب "${selectedService.name}" بنجاح! 🎉`);
+      toast.success(`تم إرسال طلب "${selectedService.name}" بنجاح! قيد المراجعة حالياً ⏳`);
       await loadData();
     } catch (err: any) {
       toast.error(err.message || 'حدث خطأ');
@@ -285,22 +287,11 @@ export default function Dashboard() {
             <button className="mobile-close" onClick={() => setMenuOpen(false)} style={{ display: 'none', background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
           </div>
 
-          {/* Balance Card */}
-          <div style={{ background: 'linear-gradient(135deg, rgba(196,168,85,0.15), rgba(226,201,126,0.05))', border: '1px solid rgba(226,201,126,0.25)', borderRadius: '14px', padding: '20px', marginBottom: '16px', textAlign: 'center' }}>
-            <Wallet size={24} color="var(--gold)" style={{ marginBottom: '8px' }} />
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>رصيدك الحالي</div>
-            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--gold)' }}>{liveBalance.toFixed(2)}</div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>جنيه مصري</div>
-          </div>
-
           <Link href="/" className="sidebar-item" style={{ textDecoration: 'none' }}>
             <Home size={18} /> الرئيسية
           </Link>
           <div className={`sidebar-item ${tab === 'services' ? 'active' : ''}`} onClick={() => { setTab('services'); setActiveCategory(null); setMenuOpen(false); }}>
             <ShoppingBag size={18} /> الخدمات الخاصة
-          </div>
-          <div className={`sidebar-item ${tab === 'deposit' ? 'active' : ''}`} onClick={() => { setTab('deposit'); setMenuOpen(false); }}>
-            <Wallet size={18} /> شحن الرصيد
           </div>
           <div className={`sidebar-item ${tab === 'history' ? 'active' : ''}`} onClick={() => { setTab('history'); setMenuOpen(false); }}>
             <Clock size={18} /> سجل المعاملات
@@ -331,11 +322,7 @@ export default function Dashboard() {
           </div>
 
           {/* Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '36px' }}>
-            <div className="stat-card">
-              <div className="stat-value">{liveBalance.toFixed(0)}</div>
-              <div className="stat-label">الرصيد (ج.م)</div>
-            </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '36px' }}>
             <div className="stat-card">
               <div className="stat-value">{transactions.filter((t: any) => t.type === 'purchase').length}</div>
               <div className="stat-label">خدمات مشتراة</div>
@@ -497,92 +484,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Deposit Orange Cash Tab */}
-          {tab === 'deposit' && (
-            <div>
-              <h2 className="section-title" style={{ marginBottom: '28px' }}>شحن رصيد المحفظة</h2>
-              <div className="glass-card" style={{ padding: '32px', maxWidth: '600px', margin: '0 auto' }}>
-                
-                {/* Method Selector */}
-                <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
-                  <button 
-                    type="button"
-                    className={depositMethod === 'orange_cash' ? 'btn-gold' : 'btn-outline'} 
-                    onClick={() => { setDepositMethod('orange_cash'); setDepositSender(''); }}
-                    style={{ flex: 1, padding: '10px', fontSize: '0.9rem', fontWeight: 600 }}
-                  >
-                    أورنج كاش / فودافون
-                  </button>
-                  <button 
-                    type="button"
-                    className={depositMethod === 'instapay' ? 'btn-gold' : 'btn-outline'} 
-                    onClick={() => { setDepositMethod('instapay'); setDepositSender(''); }}
-                    style={{ flex: 1, padding: '10px', fontSize: '0.9rem', fontWeight: 600 }}
-                  >
-                    انستاباي InstaPay
-                  </button>
-                </div>
-
-                <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>💸</div>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>
-                    {depositMethod === 'orange_cash' ? 'تحويل فودافون / أورنج كاش' : 'تحويل عبر تطبيق انستاباي'}
-                  </h3>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '6px' }}>يرجى اتباع الخطوات التالية لشحن حسابك</p>
-                </div>
-
-                <div style={{ background: 'rgba(226,201,126,0.05)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', marginBottom: '24px' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                    {depositMethod === 'orange_cash' ? 'رقم التحويل المعتمد' : 'رقم / عنوان انستاباي المعتمد'}
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--gold)', letterSpacing: '1px' }}>
-                      {depositMethod === 'orange_cash' ? paymentSettings.orangeCashNumber : paymentSettings.instaPayNumber}
-                    </span>
-                    <button type="button" className="btn-gold" onClick={handleCopyNumber} style={{ padding: '6px 16px', fontSize: '0.85rem' }}>
-                      نسخ الرقم
-                    </button>
-                  </div>
-                </div>
-
-                <form onSubmit={handleDepositSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div>
-                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>المبلغ الذي قمت بتحويله (ج.م) *</label>
-                    <input className="input-gold" type="number" placeholder="مثال: 150" value={depositAmount} onChange={e => setDepositAmount(e.target.value)} min="1" required />
-                  </div>
-
-                  <div>
-                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
-                      {depositMethod === 'orange_cash' ? 'رقم المحفظة التي قمت بالتحويل منها *' : 'اسم حساب انستاباي أو رقم المحفظة المحول منها *'}
-                    </label>
-                    <input 
-                      className="input-gold" 
-                      type="text" 
-                      placeholder={depositMethod === 'orange_cash' ? 'مثال: 01xxxxxxxxx' : 'مثال: username@instapay أو رقم هاتف'} 
-                      value={depositSender} 
-                      onChange={e => setDepositSender(e.target.value)} 
-                      required 
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>صورة إثبات التحويل (الرسالة أو الإسكرين شوت) *</label>
-                    <input className="input-gold" type="file" accept="image/*" onChange={handleFileChange} required style={{ fontSize: '0.85rem', padding: '10px' }} />
-                    {depositReceipt && (
-                      <div style={{ marginTop: '12px', textAlign: 'center', border: '1px solid var(--border)', borderRadius: '12px', padding: '8px', background: 'rgba(0,0,0,0.2)' }}>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>معاينة الصورة المرفقة</div>
-                        <img src={depositReceipt} alt="Receipt preview" style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px', objectFit: 'contain' }} />
-                      </div>
-                    )}
-                  </div>
-
-                  <button className="btn-gold" type="submit" disabled={submittingDeposit} style={{ marginTop: '12px', width: '100%', padding: '14px' }}>
-                    {submittingDeposit ? 'جاري إرسال الطلب...' : 'إرسال طلب الشحن'}
-                  </button>
-                </form>
-              </div>
-            </div>
-          )}
+          {/* Deposit tab removed */}
 
 
 
@@ -692,6 +594,70 @@ export default function Dashboard() {
                   value={whatsappNumber}
                   onChange={e => setWhatsappNumber(e.target.value)}
                 />
+              </div>
+
+              {/* Payment Details */}
+              <div style={{ marginTop: '8px', padding: '16px', background: 'rgba(226,201,126,0.02)', border: '1px dashed var(--border)', borderRadius: '12px' }}>
+                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--gold)', marginBottom: '12px' }}>تفاصيل الدفع وتحويل المبلغ:</div>
+                
+                {/* Method selector inside modal */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                  <button 
+                    type="button" 
+                    className={depositMethod === 'orange_cash' ? 'btn-gold' : 'btn-outline'} 
+                    onClick={() => setDepositMethod('orange_cash')}
+                    style={{ flex: 1, padding: '8px', fontSize: '0.8rem', borderRadius: '8px' }}
+                  >
+                    أورنج / فودافون كاش
+                  </button>
+                  <button 
+                    type="button" 
+                    className={depositMethod === 'instapay' ? 'btn-gold' : 'btn-outline'} 
+                    onClick={() => setDepositMethod('instapay')}
+                    style={{ flex: 1, padding: '8px', fontSize: '0.8rem', borderRadius: '8px' }}
+                  >
+                    انستاباي InstaPay
+                  </button>
+                </div>
+
+                {/* Transfer destination details */}
+                <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>التحويل إلى:</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--gold)', marginTop: '2px' }}>
+                      {depositMethod === 'orange_cash' ? paymentSettings.orangeCashNumber : paymentSettings.instaPayNumber}
+                    </div>
+                  </div>
+                  <button type="button" className="btn-gold" onClick={handleCopyNumber} style={{ padding: '4px 12px', fontSize: '0.75rem', borderRadius: '6px' }}>
+                    نسخ
+                  </button>
+                </div>
+
+                {/* Sender Wallet/Account Input */}
+                <div style={{ marginBottom: '14px' }}>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
+                    {depositMethod === 'orange_cash' ? 'رقم المحفظة المحول منها *' : 'اسم حساب انستاباي / رقم المحفظة المحول منها *'}
+                  </label>
+                  <input
+                    className="input-gold"
+                    type="text"
+                    placeholder={depositMethod === 'orange_cash' ? 'مثال: 01xxxxxxxxx' : 'مثال: username@instapay'}
+                    value={depositSender}
+                    onChange={e => setDepositSender(e.target.value)}
+                    style={{ padding: '8px 12px', fontSize: '0.85rem' }}
+                  />
+                </div>
+
+                {/* Screenshot upload */}
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>صورة إثبات التحويل (الرسالة أو الإسكرين شوت) *</label>
+                  <input className="input-gold" type="file" accept="image/*" onChange={handleFileChange} style={{ fontSize: '0.8rem', padding: '8px' }} />
+                  {depositReceipt && (
+                    <div style={{ marginTop: '8px', textAlign: 'center', border: '1px solid var(--border)', borderRadius: '8px', padding: '6px', background: 'rgba(0,0,0,0.3)' }}>
+                      <img src={depositReceipt} alt="Receipt preview" style={{ maxWidth: '100%', maxHeight: '120px', borderRadius: '6px', objectFit: 'contain' }} />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>

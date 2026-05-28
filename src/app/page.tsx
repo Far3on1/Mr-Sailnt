@@ -74,12 +74,7 @@ export default function Home() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {user ? (
             <>
-              {userData && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(226,201,126,0.08)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 14px' }}>
-                  <Wallet size={16} color="var(--gold)" />
-                  <span style={{ color: 'var(--gold)', fontWeight: 700, fontSize: '0.9rem' }}>{userData.balance.toFixed(2)} ج.م</span>
-                </div>
-              )}
+              {/* balance removed */}
               {isAdmin && (
                 <Link href="/admin" style={{ textDecoration: 'none' }}>
                   <div className="badge-admin" style={{ cursor: 'pointer' }}>أدمن</div>
