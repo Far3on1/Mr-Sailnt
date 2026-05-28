@@ -342,7 +342,7 @@ export default function Dashboard() {
 
                   {loading ? (
                     <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><div className="spinner" /></div>
-                  ) : services.filter(s => s.isAvailable && (!s.category || s.category === 'none')).length === 0 ? (
+                  ) : services.filter(s => !s.category || s.category === 'none').length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>
                       <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🔧</div>
                       <p>لا توجد خدمات خاصة متاحة حالياً</p>
@@ -351,7 +351,7 @@ export default function Dashboard() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
                       {(() => {
                         const rootServices = services
-                          .filter(s => s.isAvailable && (!s.category || s.category === 'none'))
+                          .filter(s => !s.category || s.category === 'none')
                           .sort((a, b) => {
                              const getWeight = (name: string) => {
                                const nameLower = name.toLowerCase();
@@ -385,7 +385,11 @@ export default function Dashboard() {
                                 <h3 style={{ fontSize: '1.05rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
                                   {isCategory ? '📁' : ''} {service.name}
                                 </h3>
-                                <span className="badge-available">متاح</span>
+                                {service.isAvailable ? (
+                                  <span className="badge-available">متاح</span>
+                                ) : (
+                                  <span className="badge-unavailable">غير متاح</span>
+                                )}
                               </div>
                               {service.description && (
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '16px' }}>{service.description}</p>
@@ -405,6 +409,7 @@ export default function Dashboard() {
                                     className="btn-gold"
                                     style={{ padding: '8px 24px', fontSize: '0.9rem', fontWeight: 600 }}
                                     onClick={() => setActiveCategory(catCode)}
+                                    disabled={!service.isAvailable}
                                   >
                                     دخول
                                   </button>
@@ -412,10 +417,10 @@ export default function Dashboard() {
                                   <button
                                     className="btn-gold"
                                     style={{ padding: '8px 18px', fontSize: '0.9rem' }}
-                                    disabled={buying === service.id || liveBalance < service.price}
+                                    disabled={buying === service.id || !service.isAvailable}
                                     onClick={() => triggerBuyFlow(service)}
                                   >
-                                    {buying === service.id ? '...' : liveBalance < service.price ? 'رصيد غير كافٍ' : 'اشتري'}
+                                    {buying === service.id ? '...' : service.isAvailable ? 'اشتري' : 'غير متاح'}
                                   </button>
                                 )}
                               </div>
@@ -445,18 +450,22 @@ export default function Dashboard() {
                     </button>
                   </div>
 
-                  {services.filter(s => s.isAvailable && s.category === activeCategory).length === 0 ? (
+                  {services.filter(s => s.category === activeCategory).length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>
                       <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🔧</div>
                       <p>لا توجد خدمات متاحة حالياً في هذا القسم</p>
                     </div>
                   ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-                      {services.filter(s => s.isAvailable && s.category === activeCategory).map(service => (
+                      {services.filter(s => s.category === activeCategory).map(service => (
                         <div key={service.id} className="glass-card" style={{ padding: '24px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                             <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>{service.name}</h3>
-                            <span className="badge-available">متاح</span>
+                            {service.isAvailable ? (
+                              <span className="badge-available">متاح</span>
+                            ) : (
+                              <span className="badge-unavailable">غير متاح</span>
+                            )}
                           </div>
                           {service.description && (
                             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '16px' }}>{service.description}</p>
@@ -469,10 +478,10 @@ export default function Dashboard() {
                             <button
                               className="btn-gold"
                               style={{ padding: '8px 18px', fontSize: '0.9rem' }}
-                              disabled={buying === service.id || liveBalance < service.price}
+                              disabled={buying === service.id || !service.isAvailable}
                               onClick={() => triggerBuyFlow(service)}
                             >
-                              {buying === service.id ? '...' : liveBalance < service.price ? 'رصيد غير كافٍ' : 'اشتري'}
+                              {buying === service.id ? '...' : service.isAvailable ? 'اشتري' : 'غير متاح'}
                             </button>
                           </div>
                         </div>

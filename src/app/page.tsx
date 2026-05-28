@@ -24,7 +24,7 @@ export default function Home() {
 
 
   const availableServices = services
-    .filter(s => s.isAvailable && (!s.category || s.category === 'none'))
+    .filter(s => !s.category || s.category === 'none')
     .sort((a, b) => {
       const getWeight = (name: string) => {
         const nameLower = name.toLowerCase();
@@ -102,7 +102,7 @@ export default function Home() {
           <span style={{ fontSize: '1.2em' }}>Mr Sailnt</span>
         </h1>
         <p style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', maxWidth: '600px', margin: '0 auto 40px', lineHeight: '1.8' }}>
-          نقدم أفضل الخدمات الرقمية بجودة عالية وأسعار مناسبة. اشحن رصيدك واستمتع بخدماتنا المتنوعة.
+          نقدم أفضل الخدمات الرقمية بجودة عالية وأسعار مناسبة. اختر خدمتك المفضلة وسدد مباشرة بكل سهولة.
         </p>
         <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
           <a href="#services" style={{ textDecoration: 'none' }}>
@@ -190,7 +190,11 @@ function ServiceCard({ service, user, userData }: { service: Service; user: any;
         <h3 style={{ fontSize: '1.15rem', fontWeight: 700, flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
           {isCategory ? '📁' : ''} {service.name}
         </h3>
-        <span className="badge-available">متاح</span>
+        {service.isAvailable ? (
+          <span className="badge-available">متاح</span>
+        ) : (
+          <span className="badge-unavailable">غير متاح</span>
+        )}
       </div>
       {service.description && (
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.7', flex: 1 }}>{service.description}</p>
@@ -208,20 +212,20 @@ function ServiceCard({ service, user, userData }: { service: Service; user: any;
           <div />
         )}
         {isCategory ? (
-          <Link href={user ? `/dashboard?category=${catCode}` : '/auth'} style={{ textDecoration: 'none' }}>
-            <button className="btn-gold" style={{ padding: '10px 24px', fontSize: '0.9rem', fontWeight: 600 }}>
+          <Link href={user && service.isAvailable ? `/dashboard?category=${catCode}` : user ? '#' : '/auth'} style={{ textDecoration: 'none', pointerEvents: (!service.isAvailable && user) ? 'none' : 'auto' }}>
+            <button className="btn-gold" style={{ padding: '10px 24px', fontSize: '0.9rem', fontWeight: 600 }} disabled={!service.isAvailable}>
               دخول
             </button>
           </Link>
         ) : user ? (
-          <Link href="/dashboard" style={{ textDecoration: 'none' }}>
-            <button className="btn-gold" style={{ padding: '10px 20px', fontSize: '0.9rem' }}>
+          <Link href={service.isAvailable ? "/dashboard" : "#"} style={{ textDecoration: 'none', pointerEvents: !service.isAvailable ? 'none' : 'auto' }}>
+            <button className="btn-gold" style={{ padding: '10px 20px', fontSize: '0.9rem' }} disabled={!service.isAvailable}>
               اشتري الآن
             </button>
           </Link>
         ) : (
           <Link href="/auth" style={{ textDecoration: 'none' }}>
-            <button className="btn-gold" style={{ padding: '10px 20px', fontSize: '0.9rem' }}>
+            <button className="btn-gold" style={{ padding: '10px 20px', fontSize: '0.9rem' }} disabled={!service.isAvailable}>
               سجّل للشراء
             </button>
           </Link>
