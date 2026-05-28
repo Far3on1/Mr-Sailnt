@@ -178,8 +178,22 @@ export default function Home() {
       </section>
 
       {/* FOOTER */}
-      <footer style={{ borderTop: '1px solid var(--border)', padding: '30px 24px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem', position: 'relative', zIndex: 1 }}>
-        <div className="navbar-logo" style={{ marginBottom: '8px' }}>Mr Sailnt</div>
+      <footer style={{ borderTop: '1px solid var(--border)', padding: '40px 24px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem', position: 'relative', zIndex: 1 }}>
+        <div className="navbar-logo" style={{ marginBottom: '16px', fontSize: '1.6rem' }}>Mr Sailnt</div>
+        
+        {/* Contact Links */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
+          <a href="https://wa.me/201201426302" target="_blank" rel="noopener noreferrer" className="btn-outline" style={{ padding: '8px 18px', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', borderRadius: '50px', fontSize: '0.85rem' }}>
+            💬 واتساب: 01201426302
+          </a>
+          <a href="https://t.me/Mr_Silent999" target="_blank" rel="noopener noreferrer" className="btn-outline" style={{ padding: '8px 18px', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', borderRadius: '50px', fontSize: '0.85rem' }}>
+            ✈️ تليجرام
+          </a>
+          <a href="https://t.me/MrSailnt_Bot" target="_blank" rel="noopener noreferrer" className="btn-gold" style={{ padding: '8px 18px', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', borderRadius: '50px', fontSize: '0.85rem' }}>
+            🤖 بوت تليجرام: @MrSailnt_Bot
+          </a>
+        </div>
+
         <p>© 2025 جميع الحقوق محفوظة</p>
       </footer>
     </div>

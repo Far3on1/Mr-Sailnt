@@ -316,7 +316,19 @@ export default function Dashboard() {
           )}
 
           <div style={{ flex: 1 }} />
-          <div style={{ padding: '8px', borderTop: '1px solid var(--border)', marginTop: '16px', paddingTop: '16px' }}>
+          <div style={{ padding: '8px', borderTop: '1px solid var(--border)', marginTop: '16px', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px', paddingRight: '8px' }}>روابط التواصل والدعم:</div>
+            <a href="https://wa.me/201201426302" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'var(--text-secondary)', fontSize: '0.8rem', paddingRight: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              💬 واتساب: 01201426302
+            </a>
+            <a href="https://t.me/Mr_Silent999" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'var(--text-secondary)', fontSize: '0.8rem', paddingRight: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              ✈️ تليجرام الشخصي
+            </a>
+            <a href="https://t.me/MrSailnt_Bot" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'var(--gold)', fontSize: '0.8rem', paddingRight: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
+              🤖 بوت الخدمات: @MrSailnt_Bot
+            </a>
+          </div>
+          <div style={{ padding: '8px', borderTop: '1px solid var(--border)', marginTop: '8px', paddingTop: '12px' }}>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '4px', paddingRight: '8px' }}>{userData?.displayName}</div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '12px', paddingRight: '8px', opacity: 0.7 }}>{user.email}</div>
             <button onClick={handleLogout} className="sidebar-item" style={{ width: '100%', border: 'none', background: 'transparent', color: '#f87171', cursor: 'pointer', textAlign: 'right' }}>
