@@ -7,7 +7,8 @@ import {
   getServices, addService, updateService, deleteService,
   getAllUsers, addBalanceToUser, Service, UserRecord,
   getAllTransactions, updateOrderStatus,
-  getPaymentSettings, updatePaymentSettings, PaymentSettings
+  getPaymentSettings, updatePaymentSettings, PaymentSettings,
+  getTelegramSecrets, updateTelegramSecrets
 } from '@/lib/firestore';
 
 import {
@@ -67,12 +68,13 @@ export default function AdminPage() {
   const loadData = async () => {
     setLoading(true);
     const { getDepositRequests } = await import('@/lib/firestore');
-    const [svcs, usrs, txs, deps, settings] = await Promise.all([
+    const [svcs, usrs, txs, deps, settings, secrets] = await Promise.all([
       getServices(), 
       getAllUsers(), 
       getAllTransactions(),
       getDepositRequests(),
-      getPaymentSettings()
+      getPaymentSettings(),
+      getTelegramSecrets()
     ]);
     setServices(svcs);
     setUsers(usrs.filter(u => u.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL));
@@ -80,8 +82,8 @@ export default function AdminPage() {
     setDepositRequests(deps);
     setOrangeCashNumber(settings.orangeCashNumber);
     setInstaPayNumber(settings.instaPayNumber);
-    setTelegramBotToken(settings.telegramBotToken || '');
-    setTelegramChatId(settings.telegramChatId || '');
+    setTelegramBotToken(secrets.telegramBotToken || '');
+    setTelegramChatId(secrets.telegramChatId || '');
     setLoading(false);
   };
 
@@ -91,12 +93,16 @@ export default function AdminPage() {
     }
     setSettingsSaving(true);
     try {
-      await updatePaymentSettings({
-        orangeCashNumber,
-        instaPayNumber,
-        telegramBotToken,
-        telegramChatId
-      });
+      await Promise.all([
+        updatePaymentSettings({
+          orangeCashNumber,
+          instaPayNumber,
+        }),
+        updateTelegramSecrets({
+          telegramBotToken,
+          telegramChatId,
+        })
+      ]);
       toast.success('تم حفظ الإعدادات بنجاح ✅');
     } catch {
       toast.error('حدث خطأ أثناء حفظ الإعدادات');

@@ -13,7 +13,7 @@ import {
   increment,
   where,
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { db, auth } from './firebase';
 
 // =================== SERVICES ===================
 export interface Service {
@@ -132,8 +132,10 @@ export const purchaseService = async (
 
   // Send Telegram Notification to Admin via serverless route handler (bypasses CORS)
   try {
-    const settings = await getPaymentSettings();
-    if (settings.telegramBotToken && settings.telegramChatId) {
+    try {
+      const userInstance = auth.currentUser;
+      const token = userInstance ? await userInstance.getIdToken() : '';
+
       const message = `🔔 طلب خدمة جديد!
 👤 العميل: ${displayName} (${userEmail})
 🛠 الخدمة: ${service.name}
@@ -143,28 +145,19 @@ export const purchaseService = async (
 💵 طريقة الدفع: ${paymentMethod === 'orange_cash' ? 'فودافون/أورنج كاش' : 'انستاباي'}
 📱 حساب المحول منه: ${senderPhone}`;
 
-      const res = await fetch('/api/telegram', {
+      await fetch('/api/telegram', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
-          botToken: settings.telegramBotToken,
-          chatId: settings.telegramChatId,
           message: message,
           receiptImage: receiptImage,
         }),
       });
-
-      if (!res.ok) {
-        console.error('API route failed, sending text fallback...');
-        await fetch(`https://api.telegram.org/bot${settings.telegramBotToken}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: settings.telegramChatId,
-            text: message + '\n\n⚠️ (فشل رفع الصورة إلى تليجرام، يرجى مراجعتها من لوحة الأدمن)',
-          }),
-        });
-      }
+    } catch (err) {
+      console.error('Error sending Telegram notification proxy request:', err);
     }
 
 
@@ -293,8 +286,6 @@ export const rejectDepositRequest = async (requestId: string) => {
 export interface PaymentSettings {
   orangeCashNumber: string;
   instaPayNumber: string;
-  telegramBotToken?: string;
-  telegramChatId?: string;
 }
 
 export const getPaymentSettings = async (): Promise<PaymentSettings> => {
@@ -305,8 +296,6 @@ export const getPaymentSettings = async (): Promise<PaymentSettings> => {
       return {
         orangeCashNumber: data.orangeCashNumber || '01201426302',
         instaPayNumber: data.instaPayNumber || '01201426302',
-        telegramBotToken: data.telegramBotToken || '',
-        telegramChatId: data.telegramChatId || '',
       };
     }
   } catch (e) {
@@ -315,13 +304,40 @@ export const getPaymentSettings = async (): Promise<PaymentSettings> => {
   return {
     orangeCashNumber: '01201426302',
     instaPayNumber: '01201426302',
-    telegramBotToken: '',
-    telegramChatId: '',
   };
 };
 
 export const updatePaymentSettings = async (settings: PaymentSettings) => {
   await setDoc(doc(db, 'settings', 'payment'), settings);
+};
+
+// =================== TELEGRAM SECRETS ===================
+export interface TelegramSecrets {
+  telegramBotToken: string;
+  telegramChatId: string;
+}
+
+export const getTelegramSecrets = async (): Promise<TelegramSecrets> => {
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'secrets'));
+    if (snap.exists()) {
+      const data = snap.data();
+      return {
+        telegramBotToken: data.telegramBotToken || '',
+        telegramChatId: data.telegramChatId || '',
+      };
+    }
+  } catch (e) {
+    console.error('Error fetching telegram secrets:', e);
+  }
+  return {
+    telegramBotToken: '',
+    telegramChatId: '',
+  };
+};
+
+export const updateTelegramSecrets = async (secrets: TelegramSecrets) => {
+  await setDoc(doc(db, 'settings', 'secrets'), secrets);
 };
 
 // =================== USER NOTIFICATIONS ===================
