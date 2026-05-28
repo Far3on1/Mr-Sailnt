@@ -25,6 +25,7 @@ interface UserData {
   balance: number;
   role: 'user' | 'admin';
   createdAt: unknown;
+  tier?: 'normal' | 'vip' | 'reseller';
 }
 
 interface AuthContextType {
