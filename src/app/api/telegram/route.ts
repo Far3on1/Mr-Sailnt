@@ -18,8 +18,8 @@ export async function POST(request: Request) {
       formData.append('chat_id', chatId);
       formData.append('caption', message);
 
-      const blob = new Blob([buffer], { type: mimeString });
-      formData.append('photo', blob, 'receipt.jpg');
+      const file = new File([buffer], 'receipt.jpg', { type: mimeString });
+      formData.append('photo', file);
 
       const telegramRes = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
         method: 'POST',

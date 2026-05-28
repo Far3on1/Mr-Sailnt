@@ -142,7 +142,7 @@ export const purchaseService = async (
 💵 طريقة الدفع: ${paymentMethod === 'orange_cash' ? 'فودافون/أورنج كاش' : 'انستاباي'}
 📱 حساب المحول منه: ${senderPhone}`;
 
-      await fetch('/api/telegram', {
+      const res = await fetch('/api/telegram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -152,6 +152,18 @@ export const purchaseService = async (
           receiptImage: receiptImage,
         }),
       });
+
+      if (!res.ok) {
+        console.error('API route failed, sending text fallback...');
+        await fetch(`https://api.telegram.org/bot${settings.telegramBotToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: settings.telegramChatId,
+            text: message + '\n\n⚠️ (فشل رفع الصورة إلى تليجرام، يرجى مراجعتها من لوحة الأدمن)',
+          }),
+        });
+      }
     }
   } catch (e) {
     console.error('Error sending Telegram notification:', e);
