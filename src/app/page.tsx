@@ -194,7 +194,7 @@ export default function Home() {
           </a>
         </div>
 
-        <p>© 2025 جميع الحقوق محفوظة</p>
+        <p>© 2025 لـ Mr Sailnt. جميع الحقوق محفوظة</p>
       </footer>
     </div>
   );
