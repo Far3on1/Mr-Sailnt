@@ -247,14 +247,42 @@ export default function Home() {
 
 // ---- Service Card Component ----
 function ServiceCard({ service, user, userData }: { service: Service; user: any; userData: any }) {
-  const isCategory = false;
+  const userTier = userData?.tier || 'normal';
+  let activePrice = service.price;
+  let showDiscount = false;
+  let originalPrice = service.price;
+
+  if (userTier === 'vip' && service.vipPrice) {
+    activePrice = service.vipPrice;
+    showDiscount = true;
+  } else if (userTier === 'reseller' && service.resellerPrice) {
+    activePrice = service.resellerPrice;
+    showDiscount = true;
+  }
 
   return (
     <div className="premium-card animate-fade-up" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <h3 style={{ fontSize: '1.15rem', fontWeight: 700, flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {service.name}
-        </h3>
+        <div>
+          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {service.name}
+          </h3>
+          {showDiscount && (
+            <span style={{
+              display: 'inline-block',
+              marginTop: '6px',
+              background: 'rgba(226,201,126,0.08)',
+              border: '1px solid rgba(226,201,126,0.2)',
+              color: 'var(--gold)',
+              fontSize: '0.7rem',
+              padding: '2px 8px',
+              borderRadius: '50px',
+              fontWeight: 600
+            }}>
+              ✨ سعر الـ {userTier === 'vip' ? 'VIP' : 'موزع'} الخاص بك
+            </span>
+          )}
+        </div>
         {service.isAvailable ? (
           <span className="badge-available">متاح</span>
         ) : (
@@ -267,9 +295,14 @@ function ServiceCard({ service, user, userData }: { service: Service; user: any;
       <div className="divider" style={{ margin: '8px 0' }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
+          {showDiscount && (
+            <span style={{ textDecoration: 'line-through', color: 'var(--text-secondary)', fontSize: '0.8rem', display: 'block', marginBottom: '2px' }}>
+              {originalPrice} ج.م
+            </span>
+          )}
           <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>السعر</span>
           <div style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1.4rem' }}>
-            {service.price} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>ج.م</span>
+            {activePrice} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>ج.م</span>
           </div>
         </div>
         {user ? (

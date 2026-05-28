@@ -145,7 +145,8 @@ export default function Dashboard() {
         whatsappNumber,
         depositSender,
         depositReceipt,
-        depositMethod
+        depositMethod,
+        userData?.tier || 'normal'
       );
       toast.success(`تم إرسال طلب "${selectedService.name}" بنجاح! قيد المراجعة حالياً ⏳`);
       await loadData();
@@ -464,35 +465,74 @@ export default function Dashboard() {
                          return getWeight(b.name, b.category) - getWeight(a.name, a.category);
                        });
 
-                    return actualServices.map(service => (
-                      <div key={service.id} className="premium-card" style={{ padding: '24px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                          <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>{service.name}</h3>
-                          {service.isAvailable ? (
-                            <span className="badge-available">متاح</span>
-                          ) : (
-                            <span className="badge-unavailable">غير متاح</span>
-                          )}
-                        </div>
-                        {service.description && (
-                          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '16px' }}>{service.description}</p>
-                        )}
-                        <div className="divider" />
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
-                          <div style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1.3rem' }}>
-                            {service.price} <span style={{ fontSize: '0.75rem', fontWeight: 400 }}>ج.م</span>
+                    return actualServices.map(service => {
+                      const userTier = userData?.tier || 'normal';
+                      let activePrice = service.price;
+                      let showDiscount = false;
+                      let originalPrice = service.price;
+
+                      if (userTier === 'vip' && service.vipPrice) {
+                        activePrice = service.vipPrice;
+                        showDiscount = true;
+                      } else if (userTier === 'reseller' && service.resellerPrice) {
+                        activePrice = service.resellerPrice;
+                        showDiscount = true;
+                      }
+
+                      return (
+                        <div key={service.id} className="premium-card" style={{ padding: '24px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                            <div>
+                              <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>{service.name}</h3>
+                              {showDiscount && (
+                                <span style={{
+                                  display: 'inline-block',
+                                  marginTop: '6px',
+                                  background: 'rgba(226,201,126,0.08)',
+                                  border: '1px solid rgba(226,201,126,0.2)',
+                                  color: 'var(--gold)',
+                                  fontSize: '0.7rem',
+                                  padding: '2px 8px',
+                                  borderRadius: '50px',
+                                  fontWeight: 600
+                                }}>
+                                  ✨ سعر الـ {userTier === 'vip' ? 'VIP' : 'موزع'} الخاص بك
+                                </span>
+                              )}
+                            </div>
+                            {service.isAvailable ? (
+                              <span className="badge-available">متاح</span>
+                            ) : (
+                              <span className="badge-unavailable">غير متاح</span>
+                            )}
                           </div>
-                          <button
-                            className="btn-gold"
-                            style={{ padding: '8px 18px', fontSize: '0.9rem' }}
-                            disabled={buying === service.id || !service.isAvailable}
-                            onClick={() => triggerBuyFlow(service)}
-                          >
-                            {buying === service.id ? '...' : service.isAvailable ? 'اشتري' : 'غير متاح'}
-                          </button>
+                          {service.description && (
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '16px' }}>{service.description}</p>
+                          )}
+                          <div className="divider" />
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
+                            <div>
+                              {showDiscount && (
+                                <span style={{ textDecoration: 'line-through', color: 'var(--text-secondary)', fontSize: '0.8rem', display: 'block', marginBottom: '2px' }}>
+                                  {originalPrice} ج.م
+                                </span>
+                              )}
+                              <div style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1.3rem' }}>
+                                {activePrice} <span style={{ fontSize: '0.75rem', fontWeight: 400 }}>ج.م</span>
+                              </div>
+                            </div>
+                            <button
+                              className="btn-gold"
+                              style={{ padding: '8px 18px', fontSize: '0.9rem' }}
+                              disabled={buying === service.id || !service.isAvailable}
+                              onClick={() => triggerBuyFlow(service)}
+                            >
+                              {buying === service.id ? '...' : service.isAvailable ? 'اشتري' : 'غير متاح'}
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ));
+                      );
+                    });
                   })()}
                 </div>
               )}

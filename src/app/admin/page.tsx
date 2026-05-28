@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import {
   getServices, addService, updateService, deleteService,
-  getAllUsers, addBalanceToUser, Service, UserRecord,
+  getAllUsers, addBalanceToUser, Service, UserRecord, updateUserTier,
   getAllTransactions, updateOrderStatus,
   getPaymentSettings, updatePaymentSettings, PaymentSettings,
   getTelegramSecrets, updateTelegramSecrets
@@ -41,6 +41,8 @@ export default function AdminPage() {
   const [svcName, setSvcName] = useState('');
   const [svcDesc, setSvcDesc] = useState('');
   const [svcPrice, setSvcPrice] = useState('');
+  const [svcVipPrice, setSvcVipPrice] = useState('');
+  const [svcResellerPrice, setSvcResellerPrice] = useState('');
   const [svcSaving, setSvcSaving] = useState(false);
   const [svcCategory, setSvcCategory] = useState('none');
 
@@ -121,24 +123,35 @@ export default function AdminPage() {
   const openAddService = () => {
     setEditingService(null);
     setSvcName(''); setSvcDesc(''); setSvcPrice('');
+    setSvcVipPrice(''); setSvcResellerPrice('');
     setSvcCategory('none');
     setShowServiceModal(true);
   };
   const openEditService = (s: Service) => {
     setEditingService(s);
     setSvcName(s.name); setSvcDesc(s.description); setSvcPrice(String(s.price));
+    setSvcVipPrice(s.vipPrice ? String(s.vipPrice) : '');
+    setSvcResellerPrice(s.resellerPrice ? String(s.resellerPrice) : '');
     setSvcCategory(s.category || 'none');
     setShowServiceModal(true);
   };
   const saveService = async () => {
     if (!svcName || !svcPrice) return toast.error('أدخل اسم السعر');
     setSvcSaving(true);
+    const payload = {
+      name: svcName,
+      description: svcDesc,
+      price: Number(svcPrice),
+      vipPrice: svcVipPrice ? Number(svcVipPrice) : null,
+      resellerPrice: svcResellerPrice ? Number(svcResellerPrice) : null,
+      category: svcCategory
+    };
     try {
       if (editingService) {
-        await updateService(editingService.id, { name: svcName, description: svcDesc, price: Number(svcPrice), category: svcCategory });
+        await updateService(editingService.id, payload as any);
         toast.success('تم تعديل الخدمة ✅');
       } else {
-        await addService({ name: svcName, description: svcDesc, price: Number(svcPrice), isAvailable: true, category: svcCategory });
+        await addService({ ...payload, isAvailable: true } as any);
         toast.success('تم إضافة الخدمة ✅');
       }
       setShowServiceModal(false);
@@ -316,6 +329,7 @@ export default function AdminPage() {
           {([
             { id: 'overview', icon: <LayoutDashboard size={18} />, label: 'نظرة عامة' },
             { id: 'services', icon: <Package size={18} />, label: 'الخدمات' },
+            { id: 'users', icon: <Users size={18} />, label: 'المستخدمين' },
             { id: 'orders', icon: <Wallet size={18} />, label: 'طلبات الخدمات' },
             { id: 'settings', icon: <Settings size={18} />, label: 'إعدادات الدفع' },
           ] as const).map(item => (
@@ -338,27 +352,101 @@ export default function AdminPage() {
         {/* Main */}
         <div className="main-content-layout" style={{ marginRight: '260px', flex: 1, padding: '40px 32px' }}>
         <h1 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '8px' }}>
-          {tab === 'overview' ? 'نظرة عامة' : tab === 'services' ? 'إدارة الخدمات' : tab === 'orders' ? 'إدارة طلبات الخدمات' : 'إعدادات الدفع'}
+          {tab === 'overview' ? 'نظرة عامة' : tab === 'services' ? 'إدارة الخدمات' : tab === 'users' ? 'إدارة المستخدمين' : tab === 'orders' ? 'إدارة طلبات الخدمات' : 'إعدادات الدفع'}
         </h1>
         <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', fontSize: '0.9rem' }}>
-          {tab === 'overview' ? 'إحصائيات الموقع' : tab === 'services' ? 'أضف وعدّل وأوقف الخدمات' : tab === 'orders' ? 'تابع طلبات الخدمات وتواصل مع العملاء والتحقق من تحويلاتهم' : 'تحديث أرقام وعناوين تحويل الأموال'}
+          {tab === 'overview' ? 'إحصائيات الموقع' : tab === 'services' ? 'أضف وعدّل وأوقف الخدمات' : tab === 'users' ? 'شحن رصيد وتغيير فئات اشتراك المستخدمين' : tab === 'orders' ? 'تابع طلبات الخدمات وتواصل مع العملاء والتحقق من تحويلاتهم' : 'تحديث أرقام وعناوين تحويل الأموال'}
         </p>
 
         {/* ===== OVERVIEW ===== */}
         {tab === 'overview' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-            {[
-              { label: 'إجمالي الخدمات', value: services.length, icon: <Package size={28} /> },
-              { label: 'خدمات مفعّلة', value: services.filter(s => s.isAvailable).length, icon: <Star size={28} /> },
-              { label: 'إجمالي المستخدمين', value: users.length, icon: <Users size={28} /> },
-              { label: 'إجمالي الطلبات', value: purchaseTransactions.length, icon: <Wallet size={28} /> },
-            ].map((stat, i) => (
-              <div key={i} className="stat-card animate-fade-up" style={{ animationDelay: `${i * 0.1}s` }}>
-                <div style={{ color: 'var(--gold)', marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>{stat.icon}</div>
-                <div className="stat-value">{stat.value}</div>
-                <div className="stat-label">{stat.label}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+            {/* Stat Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+              {[
+                { label: 'حجم المبيعات الكلي', value: `${purchaseTransactions.reduce((sum, t) => sum + (t.amount || 0), 0).toLocaleString('ar-EG')} ج.م`, icon: <Wallet size={28} /> },
+                { label: 'إجمالي الطلبات', value: purchaseTransactions.length, icon: <Wallet size={28} /> },
+                { label: 'إجمالي المستخدمين', value: users.length, icon: <Users size={28} /> },
+                { label: 'إجمالي الخدمات', value: services.length, icon: <Package size={28} /> },
+              ].map((stat, i) => (
+                <div key={i} className="stat-card animate-fade-up" style={{ animationDelay: `${i * 0.05}s` }}>
+                  <div style={{ color: 'var(--gold)', marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>{stat.icon}</div>
+                  <div className="stat-value" style={{ fontSize: typeof stat.value === 'string' && stat.value.length > 8 ? '1.5rem' : '2rem' }}>{stat.value}</div>
+                  <div className="stat-label">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Visual Analytics Row */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
+              
+              {/* Top Services Progress Bar Chart */}
+              <div className="glass-card animate-fade-up" style={{ padding: '28px', border: '1px solid var(--border)' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--gold)', marginBottom: '20px' }}>🔥 الخدمات الأكثر مبيعاً</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {(() => {
+                    const counts: { [name: string]: number } = {};
+                    purchaseTransactions.forEach(t => {
+                      if (t.serviceName) counts[t.serviceName] = (counts[t.serviceName] || 0) + 1;
+                    });
+                    const sorted = Object.entries(counts)
+                      .sort((a, b) => b[1] - a[1])
+                      .slice(0, 5);
+                    
+                    const maxVal = sorted[0]?.[1] || 1;
+
+                    if (sorted.length === 0) {
+                      return <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', textAlign: 'center', padding: '20px' }}>لا توجد بيانات كافية بعد</div>;
+                    }
+
+                    return sorted.map(([name, count], index) => {
+                      const percent = (count / maxVal) * 100;
+                      return (
+                        <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{name}</span>
+                            <span style={{ color: 'var(--gold)', fontWeight: 700 }}>{count} طلب</span>
+                          </div>
+                          <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '10px', height: '8px', width: '100%', overflow: 'hidden' }}>
+                            <div style={{
+                              background: 'linear-gradient(90deg, var(--gold-dark), var(--gold-light))',
+                              height: '100%',
+                              width: `${percent}%`,
+                              borderRadius: '10px',
+                              boxShadow: '0 0 10px rgba(226,201,126,0.3)'
+                            }} />
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
               </div>
-            ))}
+
+              {/* Recent Orders Overview Feed */}
+              <div className="glass-card animate-fade-up" style={{ padding: '28px', border: '1px solid var(--border)' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--gold)', marginBottom: '20px' }}>📈 آخر العمليات على الموقع</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '250px', overflowY: 'auto', paddingRight: '6px' }}>
+                  {purchaseTransactions.slice(0, 5).map((tx, idx) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '1px solid rgba(226,201,126,0.05)' }}>
+                      <div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{tx.serviceName}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>العميل: {tx.displayName || 'مستخدم'}</div>
+                      </div>
+                      <div style={{ textAlign: 'left' }}>
+                        <div style={{ color: 'var(--gold)', fontWeight: 700, fontSize: '0.9rem' }}>{tx.amount} ج.م</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                          {tx.status === 'completed' ? '🟢 تم التسليم' : tx.status === 'in_progress' ? '🔵 جاري' : '🟡 مراجعة'}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {purchaseTransactions.length === 0 && (
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', textAlign: 'center', padding: '20px' }}>لا توجد طلبات بعد</div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -529,7 +617,70 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Deposits tab removed */}
+        {/* ===== USERS ===== */}
+        {tab === 'users' && (
+          <div>
+            {loading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><div className="spinner" /></div>
+            ) : (
+              <div className="glass-card" style={{ overflow: 'hidden' }}>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>اسم المستخدم</th>
+                      <th>البريد الإلكتروني</th>
+                      <th>الرصيد</th>
+                      <th>فئة الاشتراك</th>
+                      <th>إجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map(u => (
+                      <tr key={u.uid}>
+                        <td style={{ fontWeight: 600 }}>{u.displayName}</td>
+                        <td style={{ color: 'var(--text-secondary)' }}>{u.email}</td>
+                        <td style={{ color: 'var(--gold)', fontWeight: 700 }}>{(u.balance || 0).toFixed(2)} ج.م</td>
+                        <td>
+                          <select
+                            value={u.tier || 'normal'}
+                            onChange={async (e) => {
+                              const newTier = e.target.value as 'normal' | 'vip' | 'reseller';
+                              try {
+                                await updateUserTier(u.uid, newTier);
+                                toast.success(`تم تغيير فئة ${u.displayName} إلى ${newTier === 'vip' ? 'VIP' : newTier === 'reseller' ? 'موزع' : 'عادي'} ✅`);
+                                await loadData();
+                              } catch {
+                                toast.error('فشل تحديث الفئة');
+                              }
+                            }}
+                            className="input-gold"
+                            style={{ padding: '6px 12px', fontSize: '0.85rem', width: 'auto', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px' }}
+                          >
+                            <option value="normal">عادي (Normal)</option>
+                            <option value="vip">عميل مميز (VIP)</option>
+                            <option value="reseller">موزع (Reseller)</option>
+                          </select>
+                        </td>
+                        <td>
+                          <button 
+                            className="btn-gold" 
+                            style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                            onClick={() => openBalance(u)}
+                          >
+                            <Wallet size={14} /> شحن رصيد
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {users.length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>لا يوجد مستخدمون بعد</div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ===== SETTINGS TAB ===== */}
         {tab === 'settings' && (
@@ -643,6 +794,16 @@ export default function AdminPage() {
               <div>
                 <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>السعر (ج.م) *</label>
                 <input className="input-gold" type="number" placeholder="0" value={svcPrice} onChange={e => setSvcPrice(e.target.value)} min="0" />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>سعر الـ VIP (ج.م) - اختياري</label>
+                  <input className="input-gold" type="number" placeholder="سعر مخفض" value={svcVipPrice} onChange={e => setSvcVipPrice(e.target.value)} min="0" />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>سعر الموزع (ج.م) - اختياري</label>
+                  <input className="input-gold" type="number" placeholder="سعر مخفض" value={svcResellerPrice} onChange={e => setSvcResellerPrice(e.target.value)} min="0" />
+                </div>
               </div>
               <div>
                 <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>القسم التابع له الخدمة</label>

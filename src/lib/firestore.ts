@@ -21,6 +21,8 @@ export interface Service {
   name: string;
   description: string;
   price: number;
+  vipPrice?: number;
+  resellerPrice?: number;
   isAvailable: boolean;
   category?: string;
   createdAt: unknown;
@@ -51,12 +53,17 @@ export interface UserRecord {
   displayName: string;
   balance: number;
   role: string;
+  tier?: 'normal' | 'vip' | 'reseller';
   createdAt: unknown;
 }
 
 export const getAllUsers = async (): Promise<UserRecord[]> => {
   const snap = await getDocs(collection(db, 'users'));
   return snap.docs.map(d => d.data() as UserRecord);
+};
+
+export const updateUserTier = async (uid: string, tier: 'normal' | 'vip' | 'reseller') => {
+  return updateDoc(doc(db, 'users', uid), { tier });
 };
 
 export const getUserByEmail = async (email: string): Promise<UserRecord | null> => {
@@ -110,14 +117,22 @@ export const purchaseService = async (
   whatsappNumber: string,
   senderPhone: string,
   receiptImage: string,
-  paymentMethod: string
+  paymentMethod: string,
+  tier: 'normal' | 'vip' | 'reseller' = 'normal'
 ) => {
+  let price = service.price;
+  if (tier === 'vip') {
+    price = service.vipPrice ?? service.price;
+  } else if (tier === 'reseller') {
+    price = service.resellerPrice ?? service.price;
+  }
+
   await addDoc(collection(db, 'transactions'), {
     userId: uid,
     userEmail,
     displayName,
     type: 'purchase',
-    amount: service.price,
+    amount: price,
     serviceId: service.id,
     serviceName: service.name,
     targetNumber,
