@@ -100,7 +100,7 @@ export default function Dashboard() {
     if (!targetNumber.trim()) return toast.error('يرجى كتابة الرقم المطلوب');
     if (!whatsappNumber.trim()) return toast.error('يرجى كتابة رقم الواتساب');
 
-    const isNationalIdService = selectedService.name.includes('الرقم القومي') || selectedService.name.includes('تموين');
+    const isNationalIdService = selectedService.name.includes('الرقم القومي') || selectedService.name.includes('تموين') || selectedService.category === 'civil';
     if (isNationalIdService && !/^\d{14}$/.test(targetNumber.trim())) {
       return toast.error('يجب أن يتكون الرقم القومي من 14 رقم بالضبط');
     }
@@ -664,7 +664,7 @@ export default function Dashboard() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {(() => {
-                const isNationalId = selectedService.name.includes('الرقم القومي') || selectedService.name.includes('تموين');
+                const isNationalId = selectedService.name.includes('الرقم القومي') || selectedService.name.includes('تموين') || selectedService.category === 'civil';
                 return (
                   <div>
                     <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
