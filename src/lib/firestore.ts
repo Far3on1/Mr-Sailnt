@@ -155,19 +155,29 @@ export const purchaseService = async (
         return new Blob([ab], { type: mimeString });
       };
 
+      let sent = false;
       if (receiptImage && receiptImage.startsWith('data:image')) {
-        const formData = new FormData();
-        formData.append('chat_id', settings.telegramChatId);
-        formData.append('caption', message);
-        const imageBlob = base64ToBlob(receiptImage);
-        formData.append('photo', imageBlob, 'receipt.jpg');
+        try {
+          const formData = new FormData();
+          formData.append('chat_id', settings.telegramChatId);
+          formData.append('caption', message);
+          const imageBlob = base64ToBlob(receiptImage);
+          formData.append('photo', imageBlob, 'receipt.jpg');
 
-        await fetch(`https://api.telegram.org/bot${settings.telegramBotToken}/sendPhoto`, {
-          method: 'POST',
-          body: formData,
-        });
-      } else {
-        // Fallback to text message if image is invalid
+          const res = await fetch(`https://api.telegram.org/bot${settings.telegramBotToken}/sendPhoto`, {
+            method: 'POST',
+            body: formData,
+          });
+          if (res.ok) {
+            sent = true;
+          }
+        } catch (err) {
+          console.error('Error sending Telegram photo:', err);
+        }
+      }
+
+      if (!sent) {
+        // Fallback to text message if sendPhoto failed or was skipped
         await fetch(`https://api.telegram.org/bot${settings.telegramBotToken}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
