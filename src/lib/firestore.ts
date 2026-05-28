@@ -167,27 +167,7 @@ export const purchaseService = async (
       }
     }
 
-    // Send background Push Notification to Admin via Firebase Cloud Messaging
-    try {
-      const settings = await getPaymentSettings();
-      if (settings.fcmServerKey) {
-        const tokens = await getAdminPushTokens();
-        if (tokens.length > 0) {
-          await fetch('/api/push', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              serverKey: settings.fcmServerKey,
-              tokens: tokens,
-              title: 'طلب خدمة جديد 🔔',
-              body: `العميل ${displayName} طلب خدمة "${service.name}"`,
-            }),
-          });
-        }
-      }
-    } catch (err) {
-      console.error('Error triggering FCM push:', err);
-    }
+
   } catch (e) {
     console.error('Error sending Telegram notification:', e);
   }
@@ -220,7 +200,6 @@ export const updateOrderStatus = async (txId: string, status: 'pending' | 'in_pr
       }
 
       await createNotification(userId, title, body);
-      await triggerUserPushNotification(userId, title, body);
     }
   } catch (err) {
     console.error('Error in status update notifications:', err);
@@ -288,7 +267,6 @@ export const approveDepositRequest = async (requestId: string, userId: string, a
     const title = 'تم قبول شحن الرصيد ✅';
     const body = `تم إضافة مبلغ ${amount} ج.م إلى حسابك بنجاح!`;
     await createNotification(userId, title, body);
-    await triggerUserPushNotification(userId, title, body);
   } catch (err) {
     console.error('Error sending deposit approval notifications:', err);
   }
@@ -305,7 +283,6 @@ export const rejectDepositRequest = async (requestId: string) => {
       const title = 'تم رفض طلب الشحن ❌';
       const body = `تم رفض طلب شحن الرصيد الخاص بك بمبلغ ${amount} ج.م. يرجى مراجعة الدعم.`;
       await createNotification(userId, title, body);
-      await triggerUserPushNotification(userId, title, body);
     }
   } catch (err) {
     console.error('Error sending deposit rejection notifications:', err);
@@ -318,8 +295,6 @@ export interface PaymentSettings {
   instaPayNumber: string;
   telegramBotToken?: string;
   telegramChatId?: string;
-  fcmServerKey?: string;
-  fcmVapidKey?: string;
 }
 
 export const getPaymentSettings = async (): Promise<PaymentSettings> => {
@@ -332,8 +307,6 @@ export const getPaymentSettings = async (): Promise<PaymentSettings> => {
         instaPayNumber: data.instaPayNumber || '01201426302',
         telegramBotToken: data.telegramBotToken || '',
         telegramChatId: data.telegramChatId || '',
-        fcmServerKey: data.fcmServerKey || '',
-        fcmVapidKey: data.fcmVapidKey || '',
       };
     }
   } catch (e) {
@@ -344,8 +317,6 @@ export const getPaymentSettings = async (): Promise<PaymentSettings> => {
     instaPayNumber: '01201426302',
     telegramBotToken: '',
     telegramChatId: '',
-    fcmServerKey: '',
-    fcmVapidKey: '',
   };
 };
 
@@ -353,20 +324,7 @@ export const updatePaymentSettings = async (settings: PaymentSettings) => {
   await setDoc(doc(db, 'settings', 'payment'), settings);
 };
 
-// =================== ADMIN PUSH TOKENS ===================
-export const saveAdminPushToken = async (adminUid: string, token: string) => {
-  await setDoc(doc(db, 'admin_push_tokens', adminUid), {
-    token,
-    updatedAt: serverTimestamp(),
-  });
-};
-
-export const getAdminPushTokens = async (): Promise<string[]> => {
-  const snap = await getDocs(collection(db, 'admin_push_tokens'));
-  return snap.docs.map(d => d.data().token).filter(t => !!t);
-};
-
-// =================== USER NOTIFICATIONS & PUSH TOKENS ===================
+// =================== USER NOTIFICATIONS ===================
 
 export interface UserNotification {
   id?: string;
@@ -376,21 +334,6 @@ export interface UserNotification {
   read: boolean;
   createdAt: any;
 }
-
-export const saveUserPushToken = async (userId: string, token: string) => {
-  await setDoc(doc(db, 'user_push_tokens', userId), {
-    token,
-    updatedAt: serverTimestamp(),
-  });
-};
-
-export const getUserPushTokens = async (userId: string): Promise<string[]> => {
-  const snap = await getDoc(doc(db, 'user_push_tokens', userId));
-  if (snap.exists() && snap.data()?.token) {
-    return [snap.data().token];
-  }
-  return [];
-};
 
 export const createNotification = async (userId: string, title: string, body: string) => {
   try {
@@ -421,28 +364,6 @@ export const markNotificationAsRead = async (notificationId: string) => {
   await updateDoc(doc(db, 'notifications', notificationId), { read: true });
 };
 
-export const triggerUserPushNotification = async (userId: string, title: string, body: string) => {
-  try {
-    const settings = await getPaymentSettings();
-    if (settings.fcmServerKey) {
-      const tokens = await getUserPushTokens(userId);
-      if (tokens.length > 0) {
-        await fetch('/api/push', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            serverKey: settings.fcmServerKey,
-            tokens: tokens,
-            title: title,
-            body: body,
-            clickAction: '/dashboard',
-          }),
-        });
-      }
-    }
-  } catch (err) {
-    console.error('Error sending user push notification:', err);
-  }
-};
+
 
 

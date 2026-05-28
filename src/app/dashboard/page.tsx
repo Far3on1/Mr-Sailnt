@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import {
   getUserTransactions, getServices, purchaseService, Service, PaymentSettings,
-  getUserNotifications, markNotificationAsRead, saveUserPushToken, UserNotification
+  getUserNotifications, markNotificationAsRead, UserNotification
 } from '@/lib/firestore';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -100,46 +100,7 @@ export default function Dashboard() {
     }
   }, [user]);
 
-  useEffect(() => {
-    if (!user) return;
 
-    const setupUserPush = async () => {
-      try {
-        if (typeof window === 'undefined' || !('Notification' in window)) return;
-        let permission = Notification.permission;
-        if (permission === 'default') {
-          permission = await Notification.requestPermission();
-        }
-
-        if (permission === 'granted') {
-          const { getMessaging, getToken } = await import('firebase/messaging');
-          const app = (await import('@/lib/firebase')).default;
-          const { getPaymentSettings } = await import('@/lib/firestore');
-          const settings = await getPaymentSettings();
-
-          if (settings.fcmVapidKey) {
-            const swUrl = `/firebase-messaging-sw.js?apiKey=${encodeURIComponent(process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '')}&authDomain=${encodeURIComponent(process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '')}&projectId=${encodeURIComponent(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '')}&storageBucket=${encodeURIComponent(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '')}&messagingSenderId=${encodeURIComponent(process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '')}&appId=${encodeURIComponent(process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '')}`;
-
-            const registration = await navigator.serviceWorker.register(swUrl);
-            const messaging = getMessaging(app);
-            const token = await getToken(messaging, {
-              vapidKey: settings.fcmVapidKey,
-              serviceWorkerRegistration: registration,
-            });
-
-            if (token) {
-              await saveUserPushToken(user.uid, token);
-              console.log('User FCM Device Token registered:', token);
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Error setting up user push notifications:', err);
-      }
-    };
-
-    setupUserPush();
-  }, [user]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
