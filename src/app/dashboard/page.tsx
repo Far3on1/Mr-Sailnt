@@ -103,17 +103,21 @@ export default function Dashboard() {
 
   const loadData = async () => {
     if (!user) return;
-    const { getPaymentSettings } = await import('@/lib/firestore');
-    const [svcs, txs, settings, notifs] = await Promise.all([
-      getServices(),
-      getUserTransactions(user.uid),
-      getPaymentSettings(),
-      getUserNotifications(user.uid)
-    ]);
-    setServices(svcs);
-    setTransactions(txs);
-    setPaymentSettings(settings);
-    setNotifications(notifs);
+    try {
+      const { getPaymentSettings } = await import('@/lib/firestore');
+      const [svcs, txs, settings, notifs] = await Promise.all([
+        getServices().catch(err => { console.error('Error fetching services:', err); return []; }),
+        getUserTransactions(user.uid).catch(err => { console.error('Error fetching user transactions:', err); return []; }),
+        getPaymentSettings().catch(err => { console.error('Error fetching payment settings:', err); return { orangeCashNumber: '01201426302', instaPayNumber: '01201426302' }; }),
+        getUserNotifications(user.uid).catch(err => { console.error('Error fetching user notifications:', err); return []; })
+      ]);
+      setServices(svcs);
+      setTransactions(txs);
+      setPaymentSettings(settings);
+      setNotifications(notifs);
+    } catch (e) {
+      console.error('Error in loadData:', e);
+    }
   };
 
   useEffect(() => {

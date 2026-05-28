@@ -84,11 +84,11 @@ export const addBalanceToUser = async (uid: string, amount: number, note: string
 };
 
 export const getUserTransactions = async (uid: string) => {
-  const snap = await getDocs(collection(db, 'transactions'));
+  const q = query(collection(db, 'transactions'), where('userId', '==', uid));
+  const snap = await getDocs(q);
   return snap.docs
     .map(d => ({ id: d.id, ...d.data() }))
-    .filter((t: any) => t.userId === uid)
-    .sort((a: any, b: any) => b.createdAt?.seconds - a.createdAt?.seconds);
+    .sort((a: any, b: any) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 };
 
 // =================== PURCHASE ===================
