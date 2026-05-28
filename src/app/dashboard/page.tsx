@@ -465,7 +465,7 @@ export default function Dashboard() {
                        });
 
                     return actualServices.map(service => (
-                      <div key={service.id} className="glass-card" style={{ padding: '24px' }}>
+                      <div key={service.id} className="premium-card" style={{ padding: '24px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                           <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>{service.name}</h3>
                           {service.isAvailable ? (

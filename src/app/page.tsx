@@ -106,12 +106,12 @@ export default function Home() {
 
       {/* HERO */}
       <section style={{ padding: '160px 24px 80px', maxWidth: '900px', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
-        <div style={{ display: 'inline-block', background: 'rgba(226,201,126,0.08)', border: '1px solid rgba(226,201,126,0.2)', borderRadius: '50px', padding: '6px 20px', marginBottom: '24px', fontSize: '0.85rem', color: 'var(--gold)' }}>
+        <div className="floating-badge" style={{ display: 'inline-block', background: 'rgba(226,201,126,0.08)', border: '1px solid rgba(226,201,126,0.2)', borderRadius: '50px', padding: '6px 20px', marginBottom: '24px', fontSize: '0.85rem', color: 'var(--gold)' }}>
           ✨ متجر سايلنت ✨
         </div>
         <h1 className="hero-title" style={{ marginBottom: '24px' }}>
           مرحباً بك في<br />
-          <span style={{ fontSize: '1.2em' }}>Mr Sailnt</span>
+          <span className="text-glow" style={{ fontSize: '1.2em' }}>Mr Sailnt</span>
         </h1>
         <p style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', maxWidth: '600px', margin: '0 auto 40px', lineHeight: '1.8' }}>
           نقدم أفضل الخدمات الرقمية بجودة عالية وأسعار مناسبة. اختر خدمتك المفضلة وسدد مباشرة بكل سهولة.
@@ -250,7 +250,7 @@ function ServiceCard({ service, user, userData }: { service: Service; user: any;
   const isCategory = false;
 
   return (
-    <div className="glass-card animate-fade-up" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div className="premium-card animate-fade-up" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <h3 style={{ fontSize: '1.15rem', fontWeight: 700, flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
           {service.name}
