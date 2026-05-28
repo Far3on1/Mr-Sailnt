@@ -19,6 +19,11 @@ if (!admin.apps.length) {
         }),
       });
     } else {
+      console.log('Firebase Admin init fallback because of missing env vars:', {
+        hasProjectId: !!projectId,
+        hasClientEmail: !!clientEmail,
+        hasPrivateKey: !!privateKey
+      });
       // Fallback for default initialization (works automatically if running on Firebase Hosting/Functions or with default envs)
       admin.initializeApp({
         projectId: projectId || 'mr-sailnt',
