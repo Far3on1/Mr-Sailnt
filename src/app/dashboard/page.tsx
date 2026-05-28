@@ -51,7 +51,7 @@ const matchesCategory = (service: Service, categoryKey: string | null) => {
 export default function Dashboard() {
   const { user, userData, logout, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [tab, setTab] = useState<'services' | 'history' | 'deposit'>('services');
+  const [tab, setTab] = useState<'services' | 'history' | 'deposit'>('history');
   const [services, setServices] = useState<Service[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [liveBalance, setLiveBalance] = useState<number>(0);
@@ -341,9 +341,7 @@ export default function Dashboard() {
           <Link href="/" className="sidebar-item" style={{ textDecoration: 'none' }}>
             <Home size={18} /> الرئيسية
           </Link>
-          <div className={`sidebar-item ${tab === 'services' ? 'active' : ''}`} onClick={() => { setTab('services'); setMenuOpen(false); }}>
-            <ShoppingBag size={18} /> الخدمات المتاحة
-          </div>
+
           <div className={`sidebar-item ${tab === 'history' ? 'active' : ''}`} onClick={() => { setTab('history'); setMenuOpen(false); }}>
             <Clock size={18} /> سجل المعاملات
           </div>
@@ -446,167 +444,8 @@ export default function Dashboard() {
               <div className="stat-value">{transactions.filter((t: any) => t.type === 'purchase').length}</div>
               <div className="stat-label">خدمات مشتراة</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-value">{services.filter(s => s.isAvailable && !isCategoryPlaceholder(s.name)).length}</div>
-              <div className="stat-label">خدمات متاحة</div>
-            </div>
+
           </div>
-
-          {/* Services Tab */}
-          {tab === 'services' && (
-            <div>
-              <h2 className="section-title" style={{ marginBottom: '28px' }}>الخدمات المتاحة</h2>
-
-              {/* Category Filter Buttons */}
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '32px', flexWrap: 'wrap', direction: 'rtl' }}>
-                {[
-                  { id: null, label: 'الكل 🌐' },
-                  { id: 'vodafone', label: 'فودافون 🔴' },
-                  { id: 'orange', label: 'أورنج 🟠' },
-                  { id: 'etisalat', label: 'اتصالات 🟢' },
-                  { id: 'we', label: 'وي 🟣' },
-                  { id: 'civil', label: 'سجل مدني 🏛️' }
-                ].map((cat) => {
-                  const isActive = activeCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id || 'all'}
-                      onClick={() => setActiveCategory(cat.id)}
-                      style={{
-                        padding: '10px 20px',
-                        borderRadius: '30px',
-                        border: isActive ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.08)',
-                        background: isActive ? 'rgba(226, 201, 126, 0.15)' : 'rgba(255,255,255,0.03)',
-                        color: isActive ? 'var(--gold)' : 'var(--text-secondary)',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        fontSize: '0.85rem',
-                        boxShadow: isActive ? '0 0 15px rgba(226, 201, 126, 0.1)' : 'none',
-                      }}
-                      className="category-filter-btn"
-                    >
-                      {cat.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {loading ? (
-                <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><div className="spinner" /></div>
-              ) : services.filter(s => !isCategoryPlaceholder(s.name)).length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>
-                  <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🔧</div>
-                  <p>لا توجد خدمات متاحة حالياً</p>
-                </div>
-              ) : (
-                (() => {
-                  const actualServices = services
-                    .filter(s => !isCategoryPlaceholder(s.name))
-                    .filter(s => matchesCategory(s, activeCategory))
-                      .sort((a, b) => {
-                         const getWeight = (name: string, category?: string) => {
-                           const nameLower = name.toLowerCase();
-                           const catLower = (category || '').toLowerCase();
-                           if (nameLower.includes('فودافون') || catLower.includes('vodafone') ||
-                               nameLower.includes('اورنج') || nameLower.includes('أورنج') || catLower.includes('orange') ||
-                               nameLower.includes('اتصالات') || catLower.includes('etisalat') ||
-                               nameLower.includes('we') || nameLower.split(/\s+/).includes('وي') || catLower.includes('we')) {
-                             return 2;
-                           }
-                           if (nameLower.includes('سجل') || catLower.includes('civil')) {
-                             return 1;
-                           }
-                           return 0;
-                         };
-                         return getWeight(b.name, b.category) - getWeight(a.name, a.category);
-                       });
-
-                    if (actualServices.length === 0) {
-                       return (
-                         <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>
-                           <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🔍</div>
-                           <p>لا توجد خدمات في هذا القسم حالياً</p>
-                         </div>
-                       );
-                     }
-
-                     return (
-                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-                         {actualServices.map(service => {
-                      const userTier = userData?.tier || 'normal';
-                      let activePrice = service.price;
-                      let showDiscount = false;
-                      let originalPrice = service.price;
-
-                      if (userTier === 'vip' && service.vipPrice) {
-                        activePrice = service.vipPrice;
-                        showDiscount = true;
-                      } else if (userTier === 'reseller' && service.resellerPrice) {
-                        activePrice = service.resellerPrice;
-                        showDiscount = true;
-                      }
-
-                      return (
-                        <div key={service.id} className="premium-card" style={{ padding: '24px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                            <div>
-                              <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>{service.name}</h3>
-                              {showDiscount && (
-                                <span style={{
-                                  display: 'inline-block',
-                                  marginTop: '6px',
-                                  background: 'rgba(226,201,126,0.08)',
-                                  border: '1px solid rgba(226,201,126,0.2)',
-                                  color: 'var(--gold)',
-                                  fontSize: '0.7rem',
-                                  padding: '2px 8px',
-                                  borderRadius: '50px',
-                                  fontWeight: 600
-                                }}>
-                                  ✨ سعر الـ {userTier === 'vip' ? 'VIP' : 'موزع'} الخاص بك
-                                </span>
-                              )}
-                            </div>
-                            {service.isAvailable ? (
-                              <span className="badge-available">متاح</span>
-                            ) : (
-                              <span className="badge-unavailable">غير متاح</span>
-                            )}
-                          </div>
-                          {service.description && (
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '16px' }}>{service.description}</p>
-                          )}
-                          <div className="divider" />
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
-                            <div>
-                              {showDiscount && (
-                                <span style={{ textDecoration: 'line-through', color: 'var(--text-secondary)', fontSize: '0.8rem', display: 'block', marginBottom: '2px' }}>
-                                  {originalPrice} ج.م
-                                </span>
-                              )}
-                              <div style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1.3rem' }}>
-                                {activePrice} <span style={{ fontSize: '0.75rem', fontWeight: 400 }}>ج.م</span>
-                              </div>
-                            </div>
-                            <button
-                              className="btn-gold"
-                              style={{ padding: '8px 18px', fontSize: '0.9rem' }}
-                              disabled={buying === service.id || !service.isAvailable}
-                              onClick={() => triggerBuyFlow(service)}
-                            >
-                              {buying === service.id ? '...' : service.isAvailable ? 'اشتري' : 'غير متاح'}
-                            </button>
-                          </div>
-                        </div>
-                      );
-                            })}
-                  </div>
-                );
-              })()
-            )}
-            </div>
-          )}
 
           {/* Deposit tab removed */}
 
