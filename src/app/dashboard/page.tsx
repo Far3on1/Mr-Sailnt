@@ -26,6 +26,28 @@ const isCategoryPlaceholder = (name: string) => {
   );
 };
 
+const matchesCategory = (service: Service, categoryKey: string | null) => {
+  if (!categoryKey) return true;
+  const sCat = (service.category || '').toLowerCase();
+  const sName = service.name.toLowerCase();
+  if (categoryKey === 'vodafone') {
+    return sCat === 'vodafone' || sName.includes('فودافون');
+  }
+  if (categoryKey === 'orange') {
+    return sCat === 'orange' || sName.includes('orange') || sName.includes('اورنج') || sName.includes('أورنج');
+  }
+  if (categoryKey === 'etisalat') {
+    return sCat === 'etisalat' || sName.includes('etisalat') || sName.includes('اتصالات');
+  }
+  if (categoryKey === 'we') {
+    return sCat === 'we' || sName.includes('we') || sName.split(/\s+/).includes('وي') || sName.includes('المصرية للاتصالات');
+  }
+  if (categoryKey === 'civil') {
+    return sCat === 'civil' || sName.includes('سجل') || sName.includes('الرقم القومي') || sName.includes('تموين');
+  }
+  return sCat === categoryKey;
+};
+
 export default function Dashboard() {
   const { user, userData, logout, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -435,6 +457,41 @@ export default function Dashboard() {
             <div>
               <h2 className="section-title" style={{ marginBottom: '28px' }}>الخدمات المتاحة</h2>
 
+              {/* Category Filter Buttons */}
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '32px', flexWrap: 'wrap', direction: 'rtl' }}>
+                {[
+                  { id: null, label: 'الكل 🌐' },
+                  { id: 'vodafone', label: 'فودافون 🔴' },
+                  { id: 'orange', label: 'أورنج 🟠' },
+                  { id: 'etisalat', label: 'اتصالات 🟢' },
+                  { id: 'we', label: 'وي 🟣' },
+                  { id: 'civil', label: 'سجل مدني 🏛️' }
+                ].map((cat) => {
+                  const isActive = activeCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id || 'all'}
+                      onClick={() => setActiveCategory(cat.id)}
+                      style={{
+                        padding: '10px 20px',
+                        borderRadius: '30px',
+                        border: isActive ? '1px solid var(--gold)' : '1px solid rgba(255,255,255,0.08)',
+                        background: isActive ? 'rgba(226, 201, 126, 0.15)' : 'rgba(255,255,255,0.03)',
+                        color: isActive ? 'var(--gold)' : 'var(--text-secondary)',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        fontSize: '0.85rem',
+                        boxShadow: isActive ? '0 0 15px rgba(226, 201, 126, 0.1)' : 'none',
+                      }}
+                      className="category-filter-btn"
+                    >
+                      {cat.label}
+                    </button>
+                  );
+                })}
+              </div>
+
               {loading ? (
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><div className="spinner" /></div>
               ) : services.filter(s => !isCategoryPlaceholder(s.name)).length === 0 ? (
@@ -443,10 +500,10 @@ export default function Dashboard() {
                   <p>لا توجد خدمات متاحة حالياً</p>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-                  {(() => {
-                    const actualServices = services
-                      .filter(s => !isCategoryPlaceholder(s.name))
+                (() => {
+                  const actualServices = services
+                    .filter(s => !isCategoryPlaceholder(s.name))
+                    .filter(s => matchesCategory(s, activeCategory))
                       .sort((a, b) => {
                          const getWeight = (name: string, category?: string) => {
                            const nameLower = name.toLowerCase();
@@ -465,7 +522,18 @@ export default function Dashboard() {
                          return getWeight(b.name, b.category) - getWeight(a.name, a.category);
                        });
 
-                    return actualServices.map(service => {
+                    if (actualServices.length === 0) {
+                       return (
+                         <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>
+                           <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🔍</div>
+                           <p>لا توجد خدمات في هذا القسم حالياً</p>
+                         </div>
+                       );
+                     }
+
+                     return (
+                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                         {actualServices.map(service => {
                       const userTier = userData?.tier || 'normal';
                       let activePrice = service.price;
                       let showDiscount = false;
@@ -532,10 +600,11 @@ export default function Dashboard() {
                           </div>
                         </div>
                       );
-                    });
-                  })()}
-                </div>
-              )}
+                            })}
+                  </div>
+                );
+              })()
+            )}
             </div>
           )}
 
