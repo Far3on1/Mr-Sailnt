@@ -10,6 +10,19 @@ import { Wallet, LogOut, ShoppingBag, Clock, Home, Star, CheckCircle, XCircle } 
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
+const isCategoryPlaceholder = (name: string) => {
+  const nameLower = name.toLowerCase();
+  return nameLower.startsWith('خدمات ') && (
+    nameLower.includes('فودافون') ||
+    nameLower.includes('اورنج') ||
+    nameLower.includes('أورنج') ||
+    nameLower.includes('اتصالات') ||
+    nameLower.includes('we') ||
+    nameLower.split(/\s+/).includes('وي') ||
+    nameLower.includes('سجل')
+  );
+};
+
 export default function Dashboard() {
   const { user, userData, logout, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -290,8 +303,8 @@ export default function Dashboard() {
           <Link href="/" className="sidebar-item" style={{ textDecoration: 'none' }}>
             <Home size={18} /> الرئيسية
           </Link>
-          <div className={`sidebar-item ${tab === 'services' ? 'active' : ''}`} onClick={() => { setTab('services'); setActiveCategory(null); setMenuOpen(false); }}>
-            <ShoppingBag size={18} /> الخدمات الخاصة
+          <div className={`sidebar-item ${tab === 'services' ? 'active' : ''}`} onClick={() => { setTab('services'); setMenuOpen(false); }}>
+            <ShoppingBag size={18} /> الخدمات المتاحة
           </div>
           <div className={`sidebar-item ${tab === 'history' ? 'active' : ''}`} onClick={() => { setTab('history'); setMenuOpen(false); }}>
             <Clock size={18} /> سجل المعاملات
@@ -328,7 +341,7 @@ export default function Dashboard() {
               <div className="stat-label">خدمات مشتراة</div>
             </div>
             <div className="stat-card">
-              <div className="stat-value">{services.filter(s => s.isAvailable).length}</div>
+              <div className="stat-value">{services.filter(s => s.isAvailable && !isCategoryPlaceholder(s.name)).length}</div>
               <div className="stat-label">خدمات متاحة</div>
             </div>
           </div>
@@ -336,158 +349,68 @@ export default function Dashboard() {
           {/* Services Tab */}
           {tab === 'services' && (
             <div>
-              {activeCategory === null ? (
-                <div>
-                  <h2 className="section-title" style={{ marginBottom: '28px' }}>الخدمات الخاصة المتاحة</h2>
+              <h2 className="section-title" style={{ marginBottom: '28px' }}>الخدمات المتاحة</h2>
 
-                  {loading ? (
-                    <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><div className="spinner" /></div>
-                  ) : services.filter(s => !s.category || s.category === 'none').length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>
-                      <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🔧</div>
-                      <p>لا توجد خدمات خاصة متاحة حالياً</p>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-                      {(() => {
-                        const rootServices = services
-                          .filter(s => !s.category || s.category === 'none')
-                          .sort((a, b) => {
-                             const getWeight = (name: string) => {
-                               const nameLower = name.toLowerCase();
-                               if (nameLower.includes('فودافون') || 
-                                   nameLower.includes('اورنج') || 
-                                   nameLower.includes('أورنج') || 
-                                   nameLower.includes('اتصالات') || 
-                                   nameLower.includes('we') || 
-                                   nameLower.split(/\s+/).includes('وي')) {
-                                 return 2;
-                               }
-                               if (nameLower.includes('سجل مدني') || nameLower.includes('السجل المدني')) {
-                                 return 1;
-                               }
-                               return 0;
-                             };
-                             return getWeight(b.name) - getWeight(a.name);
-                           });
-
-                        return rootServices.map(service => {
-                          const nameLower = service.name.toLowerCase();
-                          const catCode = nameLower.includes('فودافون') ? 'vodafone' :
-                                          (nameLower.includes('اورنج') || nameLower.includes('أورنج')) ? 'orange' :
-                                          nameLower.includes('اتصالات') ? 'etisalat' :
-                                          (nameLower.includes('we') || nameLower.split(/\s+/).includes('وي')) ? 'we' :
-                                          (nameLower.includes('سجل مدني') || nameLower.includes('السجل المدني')) ? 'civil' : null;
-                          const isCategory = catCode !== null;
-                          return (
-                            <div key={service.id} className="glass-card" style={{ padding: '24px', border: isCategory ? '1px solid rgba(226,201,126,0.15)' : undefined }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  {isCategory ? '📁' : ''} {service.name}
-                                </h3>
-                                {service.isAvailable ? (
-                                  <span className="badge-available">متاح</span>
-                                ) : (
-                                  <span className="badge-unavailable">غير متاح</span>
-                                )}
-                              </div>
-                              {service.description && (
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '16px' }}>{service.description}</p>
-                              )}
-                              <div className="divider" />
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
-                                {!isCategory ? (
-                                  <div style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1.3rem' }}>
-                                    {service.price} <span style={{ fontSize: '0.75rem', fontWeight: 400 }}>ج.م</span>
-                                  </div>
-                                ) : (
-                                  <div />
-                                )}
-                                
-                                {isCategory ? (
-                                  <button
-                                    className="btn-gold"
-                                    style={{ padding: '8px 24px', fontSize: '0.9rem', fontWeight: 600 }}
-                                    onClick={() => setActiveCategory(catCode)}
-                                    disabled={!service.isAvailable}
-                                  >
-                                    دخول
-                                  </button>
-                                ) : (
-                                  <button
-                                    className="btn-gold"
-                                    style={{ padding: '8px 18px', fontSize: '0.9rem' }}
-                                    disabled={buying === service.id || !service.isAvailable}
-                                    onClick={() => triggerBuyFlow(service)}
-                                  >
-                                    {buying === service.id ? '...' : service.isAvailable ? 'اشتري' : 'غير متاح'}
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        });
-                      })()}
-                    </div>
-                  )}
+              {loading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><div className="spinner" /></div>
+              ) : services.filter(s => !isCategoryPlaceholder(s.name)).length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🔧</div>
+                  <p>لا توجد خدمات متاحة حالياً</p>
                 </div>
               ) : (
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
-                    <h2 className="section-title" style={{ margin: 0 }}>
-                      {activeCategory === 'vodafone' ? 'خدمات فودافون' :
-                       activeCategory === 'orange' ? 'خدمات اورنج' :
-                       activeCategory === 'etisalat' ? 'خدمات اتصالات' :
-                       activeCategory === 'we' ? 'خدمات We' :
-                       activeCategory === 'civil' ? 'خدمات السجل المدني' : 'الخدمات الفرعية'}
-                    </h2>
-                    <button 
-                      className="btn-outline" 
-                      onClick={() => setActiveCategory(null)}
-                      style={{ padding: '8px 20px', fontSize: '0.9rem' }}
-                    >
-                      ← العودة للشبكات
-                    </button>
-                  </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+                  {(() => {
+                    const actualServices = services
+                      .filter(s => !isCategoryPlaceholder(s.name))
+                      .sort((a, b) => {
+                         const getWeight = (name: string, category?: string) => {
+                           const nameLower = name.toLowerCase();
+                           const catLower = (category || '').toLowerCase();
+                           if (nameLower.includes('فودافون') || catLower.includes('vodafone') ||
+                               nameLower.includes('اورنج') || nameLower.includes('أورنج') || catLower.includes('orange') ||
+                               nameLower.includes('اتصالات') || catLower.includes('etisalat') ||
+                               nameLower.includes('we') || nameLower.split(/\s+/).includes('وي') || catLower.includes('we')) {
+                             return 2;
+                           }
+                           if (nameLower.includes('سجل') || catLower.includes('civil')) {
+                             return 1;
+                           }
+                           return 0;
+                         };
+                         return getWeight(b.name, b.category) - getWeight(a.name, a.category);
+                       });
 
-                  {services.filter(s => s.category === activeCategory).length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>
-                      <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🔧</div>
-                      <p>لا توجد خدمات متاحة حالياً في هذا القسم</p>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-                      {services.filter(s => s.category === activeCategory).map(service => (
-                        <div key={service.id} className="glass-card" style={{ padding: '24px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                            <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>{service.name}</h3>
-                            {service.isAvailable ? (
-                              <span className="badge-available">متاح</span>
-                            ) : (
-                              <span className="badge-unavailable">غير متاح</span>
-                            )}
-                          </div>
-                          {service.description && (
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '16px' }}>{service.description}</p>
+                    return actualServices.map(service => (
+                      <div key={service.id} className="glass-card" style={{ padding: '24px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                          <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>{service.name}</h3>
+                          {service.isAvailable ? (
+                            <span className="badge-available">متاح</span>
+                          ) : (
+                            <span className="badge-unavailable">غير متاح</span>
                           )}
-                          <div className="divider" />
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
-                            <div style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1.3rem' }}>
-                              {service.price} <span style={{ fontSize: '0.75rem', fontWeight: 400 }}>ج.م</span>
-                            </div>
-                            <button
-                              className="btn-gold"
-                              style={{ padding: '8px 18px', fontSize: '0.9rem' }}
-                              disabled={buying === service.id || !service.isAvailable}
-                              onClick={() => triggerBuyFlow(service)}
-                            >
-                              {buying === service.id ? '...' : service.isAvailable ? 'اشتري' : 'غير متاح'}
-                            </button>
-                          </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                        {service.description && (
+                          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '16px' }}>{service.description}</p>
+                        )}
+                        <div className="divider" />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
+                          <div style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1.3rem' }}>
+                            {service.price} <span style={{ fontSize: '0.75rem', fontWeight: 400 }}>ج.م</span>
+                          </div>
+                          <button
+                            className="btn-gold"
+                            style={{ padding: '8px 18px', fontSize: '0.9rem' }}
+                            disabled={buying === service.id || !service.isAvailable}
+                            onClick={() => triggerBuyFlow(service)}
+                          >
+                            {buying === service.id ? '...' : service.isAvailable ? 'اشتري' : 'غير متاح'}
+                          </button>
+                        </div>
+                      </div>
+                    ));
+                  })()}
                 </div>
               )}
             </div>

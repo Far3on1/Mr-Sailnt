@@ -23,25 +23,37 @@ export default function Home() {
   }, []);
 
 
+  const isCategoryPlaceholder = (name: string) => {
+    const nameLower = name.toLowerCase();
+    return nameLower.startsWith('خدمات ') && (
+      nameLower.includes('فودافون') ||
+      nameLower.includes('اورنج') ||
+      nameLower.includes('أورنج') ||
+      nameLower.includes('اتصالات') ||
+      nameLower.includes('we') ||
+      nameLower.split(/\s+/).includes('وي') ||
+      nameLower.includes('سجل')
+    );
+  };
+
   const availableServices = services
-    .filter(s => !s.category || s.category === 'none')
+    .filter(s => !isCategoryPlaceholder(s.name))
     .sort((a, b) => {
-      const getWeight = (name: string) => {
+      const getWeight = (name: string, category?: string) => {
         const nameLower = name.toLowerCase();
-        if (nameLower.includes('فودافون') || 
-            nameLower.includes('اورنج') || 
-            nameLower.includes('أورنج') || 
-            nameLower.includes('اتصالات') || 
-            nameLower.includes('we') || 
-            nameLower.split(/\s+/).includes('وي')) {
+        const catLower = (category || '').toLowerCase();
+        if (nameLower.includes('فودافون') || catLower.includes('vodafone') ||
+            nameLower.includes('اورنج') || nameLower.includes('أورنج') || catLower.includes('orange') ||
+            nameLower.includes('اتصالات') || catLower.includes('etisalat') ||
+            nameLower.includes('we') || nameLower.split(/\s+/).includes('وي') || catLower.includes('we')) {
           return 2;
         }
-        if (nameLower.includes('سجل مدني') || nameLower.includes('السجل المدني')) {
+        if (nameLower.includes('سجل') || catLower.includes('civil')) {
           return 1;
         }
         return 0;
       };
-      return getWeight(b.name) - getWeight(a.name);
+      return getWeight(b.name, b.category) - getWeight(a.name, a.category);
     });
 
   return (
@@ -176,19 +188,13 @@ export default function Home() {
 
 // ---- Service Card Component ----
 function ServiceCard({ service, user, userData }: { service: Service; user: any; userData: any }) {
-  const nameLower = service.name.toLowerCase();
-  const catCode = nameLower.includes('فودافون') ? 'vodafone' :
-                  (nameLower.includes('اورنج') || nameLower.includes('أورنج')) ? 'orange' :
-                  nameLower.includes('اتصالات') ? 'etisalat' :
-                  (nameLower.includes('we') || nameLower.split(/\s+/).includes('وي')) ? 'we' :
-                  (nameLower.includes('سجل مدني') || nameLower.includes('السجل المدني')) ? 'civil' : null;
-  const isCategory = catCode !== null;
+  const isCategory = false;
 
   return (
     <div className="glass-card animate-fade-up" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <h3 style={{ fontSize: '1.15rem', fontWeight: 700, flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {isCategory ? '📁' : ''} {service.name}
+          {service.name}
         </h3>
         {service.isAvailable ? (
           <span className="badge-available">متاح</span>
@@ -201,23 +207,13 @@ function ServiceCard({ service, user, userData }: { service: Service; user: any;
       )}
       <div className="divider" style={{ margin: '8px 0' }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        {!isCategory ? (
-          <div>
-            <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>السعر</span>
-            <div style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1.4rem' }}>
-              {service.price} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>ج.م</span>
-            </div>
+        <div>
+          <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>السعر</span>
+          <div style={{ color: 'var(--gold)', fontWeight: 800, fontSize: '1.4rem' }}>
+            {service.price} <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>ج.م</span>
           </div>
-        ) : (
-          <div />
-        )}
-        {isCategory ? (
-          <Link href={user && service.isAvailable ? `/dashboard?category=${catCode}` : user ? '#' : '/auth'} style={{ textDecoration: 'none', pointerEvents: (!service.isAvailable && user) ? 'none' : 'auto' }}>
-            <button className="btn-gold" style={{ padding: '10px 24px', fontSize: '0.9rem', fontWeight: 600 }} disabled={!service.isAvailable}>
-              دخول
-            </button>
-          </Link>
-        ) : user ? (
+        </div>
+        {user ? (
           <Link href={service.isAvailable ? "/dashboard" : "#"} style={{ textDecoration: 'none', pointerEvents: !service.isAvailable ? 'none' : 'auto' }}>
             <button className="btn-gold" style={{ padding: '10px 20px', fontSize: '0.9rem' }} disabled={!service.isAvailable}>
               اشتري الآن
