@@ -142,14 +142,41 @@ export const purchaseService = async (
 💵 طريقة الدفع: ${paymentMethod === 'orange_cash' ? 'فودافون/أورنج كاش' : 'انستاباي'}
 📱 حساب المحول منه: ${senderPhone}`;
 
-      await fetch(`https://api.telegram.org/bot${settings.telegramBotToken}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: settings.telegramChatId,
-          text: message,
-        }),
-      });
+      // Helper to convert base64 to Blob for Telegram upload
+      const base64ToBlob = (base64Str: string) => {
+        const parts = base64Str.split(',');
+        const byteString = atob(parts[1]);
+        const mimeString = parts[0].split(':')[1].split(';')[0];
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+          ia[i] = byteString.charCodeAt(i);
+        }
+        return new Blob([ab], { type: mimeString });
+      };
+
+      if (receiptImage && receiptImage.startsWith('data:image')) {
+        const formData = new FormData();
+        formData.append('chat_id', settings.telegramChatId);
+        formData.append('caption', message);
+        const imageBlob = base64ToBlob(receiptImage);
+        formData.append('photo', imageBlob, 'receipt.jpg');
+
+        await fetch(`https://api.telegram.org/bot${settings.telegramBotToken}/sendPhoto`, {
+          method: 'POST',
+          body: formData,
+        });
+      } else {
+        // Fallback to text message if image is invalid
+        await fetch(`https://api.telegram.org/bot${settings.telegramBotToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: settings.telegramChatId,
+            text: message,
+          }),
+        });
+      }
     }
   } catch (e) {
     console.error('Error sending Telegram notification:', e);
