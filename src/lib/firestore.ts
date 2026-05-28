@@ -11,6 +11,7 @@ import {
   query,
   orderBy,
   increment,
+  where,
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -201,6 +202,29 @@ export const getAllTransactions = async (): Promise<TransactionRecord[]> => {
 
 export const updateOrderStatus = async (txId: string, status: 'pending' | 'in_progress' | 'completed') => {
   await updateDoc(doc(db, 'transactions', txId), { status });
+  try {
+    const txSnap = await getDoc(doc(db, 'transactions', txId));
+    if (txSnap.exists()) {
+      const tx = txSnap.data();
+      const userId = tx.userId;
+      const serviceName = tx.serviceName || 'الخدمة المطلوبة';
+      
+      let title = 'تحديث حالة طلبك 🔔';
+      let body = '';
+      if (status === 'in_progress') {
+        body = `بدأ العمل على طلبك لخدمة "${serviceName}"`;
+      } else if (status === 'completed') {
+        body = `تم تسليم طلبك لخدمة "${serviceName}" بنجاح! 🎉`;
+      } else {
+        body = `طلبك لخدمة "${serviceName}" قيد المراجعة الآن`;
+      }
+
+      await createNotification(userId, title, body);
+      await triggerUserPushNotification(userId, title, body);
+    }
+  } catch (err) {
+    console.error('Error in status update notifications:', err);
+  }
 };
 
 // =================== DEPOSIT REQUESTS ===================
@@ -260,10 +284,32 @@ export const approveDepositRequest = async (requestId: string, userId: string, a
     note: `شحن رصيد مقبول`,
     createdAt: serverTimestamp(),
   });
+  try {
+    const title = 'تم قبول شحن الرصيد ✅';
+    const body = `تم إضافة مبلغ ${amount} ج.م إلى حسابك بنجاح!`;
+    await createNotification(userId, title, body);
+    await triggerUserPushNotification(userId, title, body);
+  } catch (err) {
+    console.error('Error sending deposit approval notifications:', err);
+  }
 };
 
 export const rejectDepositRequest = async (requestId: string) => {
   await updateDoc(doc(db, 'deposit_requests', requestId), { status: 'rejected' });
+  try {
+    const reqSnap = await getDoc(doc(db, 'deposit_requests', requestId));
+    if (reqSnap.exists()) {
+      const reqData = reqSnap.data();
+      const userId = reqData.userId;
+      const amount = reqData.amount;
+      const title = 'تم رفض طلب الشحن ❌';
+      const body = `تم رفض طلب شحن الرصيد الخاص بك بمبلغ ${amount} ج.م. يرجى مراجعة الدعم.`;
+      await createNotification(userId, title, body);
+      await triggerUserPushNotification(userId, title, body);
+    }
+  } catch (err) {
+    console.error('Error sending deposit rejection notifications:', err);
+  }
 };
 
 // =================== PAYMENT SETTINGS ===================
@@ -318,6 +364,85 @@ export const saveAdminPushToken = async (adminUid: string, token: string) => {
 export const getAdminPushTokens = async (): Promise<string[]> => {
   const snap = await getDocs(collection(db, 'admin_push_tokens'));
   return snap.docs.map(d => d.data().token).filter(t => !!t);
+};
+
+// =================== USER NOTIFICATIONS & PUSH TOKENS ===================
+
+export interface UserNotification {
+  id?: string;
+  userId: string;
+  title: string;
+  body: string;
+  read: boolean;
+  createdAt: any;
+}
+
+export const saveUserPushToken = async (userId: string, token: string) => {
+  await setDoc(doc(db, 'user_push_tokens', userId), {
+    token,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+export const getUserPushTokens = async (userId: string): Promise<string[]> => {
+  const snap = await getDoc(doc(db, 'user_push_tokens', userId));
+  if (snap.exists() && snap.data()?.token) {
+    return [snap.data().token];
+  }
+  return [];
+};
+
+export const createNotification = async (userId: string, title: string, body: string) => {
+  try {
+    await addDoc(collection(db, 'notifications'), {
+      userId,
+      title,
+      body,
+      read: false,
+      createdAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('Error creating database notification:', err);
+  }
+};
+
+export const getUserNotifications = async (userId: string): Promise<UserNotification[]> => {
+  const q = query(
+    collection(db, 'notifications'),
+    where('userId', '==', userId)
+  );
+  const snap = await getDocs(q);
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() } as UserNotification))
+    .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+};
+
+export const markNotificationAsRead = async (notificationId: string) => {
+  await updateDoc(doc(db, 'notifications', notificationId), { read: true });
+};
+
+export const triggerUserPushNotification = async (userId: string, title: string, body: string) => {
+  try {
+    const settings = await getPaymentSettings();
+    if (settings.fcmServerKey) {
+      const tokens = await getUserPushTokens(userId);
+      if (tokens.length > 0) {
+        await fetch('/api/push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            serverKey: settings.fcmServerKey,
+            tokens: tokens,
+            title: title,
+            body: body,
+            clickAction: '/dashboard',
+          }),
+        });
+      }
+    }
+  } catch (err) {
+    console.error('Error sending user push notification:', err);
+  }
 };
 
 

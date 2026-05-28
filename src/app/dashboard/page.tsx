@@ -3,10 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { getUserTransactions, getServices, purchaseService, Service, PaymentSettings } from '@/lib/firestore';
+import {
+  getUserTransactions, getServices, purchaseService, Service, PaymentSettings,
+  getUserNotifications, markNotificationAsRead, saveUserPushToken, UserNotification
+} from '@/lib/firestore';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Wallet, LogOut, ShoppingBag, Clock, Home, Star, CheckCircle, XCircle } from 'lucide-react';
+import { Wallet, LogOut, ShoppingBag, Clock, Home, Star, CheckCircle, XCircle, Bell, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -59,6 +62,10 @@ export default function Dashboard() {
   const [showSpecialServices, setShowSpecialServices] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
+  // Notifications State
+  const [notifications, setNotifications] = useState<UserNotification[]>([]);
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+
   useEffect(() => {
     if (!authLoading && !user) { router.push('/auth'); return; }
   }, [user, authLoading]);
@@ -75,20 +82,63 @@ export default function Dashboard() {
   const loadData = async () => {
     if (!user) return;
     const { getPaymentSettings } = await import('@/lib/firestore');
-    const [svcs, txs, settings] = await Promise.all([
+    const [svcs, txs, settings, notifs] = await Promise.all([
       getServices(),
       getUserTransactions(user.uid),
-      getPaymentSettings()
+      getPaymentSettings(),
+      getUserNotifications(user.uid)
     ]);
     setServices(svcs);
     setTransactions(txs);
     setPaymentSettings(settings);
+    setNotifications(notifs);
   };
 
   useEffect(() => {
     if (user) {
       loadData().finally(() => setLoading(false));
     }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const setupUserPush = async () => {
+      try {
+        if (typeof window === 'undefined' || !('Notification' in window)) return;
+        let permission = Notification.permission;
+        if (permission === 'default') {
+          permission = await Notification.requestPermission();
+        }
+
+        if (permission === 'granted') {
+          const { getMessaging, getToken } = await import('firebase/messaging');
+          const app = (await import('@/lib/firebase')).default;
+          const { getPaymentSettings } = await import('@/lib/firestore');
+          const settings = await getPaymentSettings();
+
+          if (settings.fcmVapidKey) {
+            const swUrl = `/firebase-messaging-sw.js?apiKey=${encodeURIComponent(process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '')}&authDomain=${encodeURIComponent(process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '')}&projectId=${encodeURIComponent(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '')}&storageBucket=${encodeURIComponent(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '')}&messagingSenderId=${encodeURIComponent(process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '')}&appId=${encodeURIComponent(process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '')}`;
+
+            const registration = await navigator.serviceWorker.register(swUrl);
+            const messaging = getMessaging(app);
+            const token = await getToken(messaging, {
+              vapidKey: settings.fcmVapidKey,
+              serviceWorkerRegistration: registration,
+            });
+
+            if (token) {
+              await saveUserPushToken(user.uid, token);
+              console.log('User FCM Device Token registered:', token);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error setting up user push notifications:', err);
+      }
+    };
+
+    setupUserPush();
   }, [user]);
 
   useEffect(() => {
@@ -343,11 +393,54 @@ export default function Dashboard() {
 
         {/* Main Content */}
         <div className="main-content-layout" style={{ marginRight: '260px', flex: 1, padding: '40px 32px', minHeight: '100vh', width: '100%' }}>
-          <div style={{ marginBottom: '32px' }}>
-            <h1 style={{ fontSize: '1.8rem', fontWeight: 800 }}>
-              أهلاً، {userData?.displayName || 'مستخدم'} 👋
-            </h1>
-            <p style={{ color: 'var(--text-secondary)', marginTop: '6px' }}>مرحباً بك في لوحة التحكم</p>
+          <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h1 style={{ fontSize: '1.8rem', fontWeight: 800 }}>
+                أهلاً، {userData?.displayName || 'مستخدم'} 👋
+              </h1>
+              <p style={{ color: 'var(--text-secondary)', marginTop: '6px' }}>مرحباً بك في لوحة التحكم</p>
+            </div>
+            
+            <button
+              onClick={() => setShowNotificationsModal(true)}
+              style={{
+                position: 'relative',
+                background: 'rgba(226,201,126,0.08)',
+                border: '1px solid rgba(226,201,126,0.2)',
+                borderRadius: '50%',
+                width: '44px',
+                height: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--gold)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              title="الإشعارات"
+              className="btn-notification-bell"
+            >
+              <Bell size={20} />
+              {notifications.filter(n => !n.read).length > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-2px',
+                  right: '-2px',
+                  background: '#ef4444',
+                  color: 'white',
+                  borderRadius: '50%',
+                  fontSize: '0.7rem',
+                  fontWeight: 'bold',
+                  width: '18px',
+                  height: '18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  {notifications.filter(n => !n.read).length}
+                </span>
+              )}
+            </button>
           </div>
 
           {(() => {
@@ -673,6 +766,106 @@ export default function Dashboard() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== NOTIFICATIONS MODAL ===== */}
+      {showNotificationsModal && (
+        <div className="modal-overlay" onClick={() => setShowNotificationsModal(false)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '1.3rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Bell size={22} style={{ color: 'var(--gold)' }} /> مركز الإشعارات
+              </h2>
+              <button 
+                onClick={() => setShowNotificationsModal(false)} 
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}
+              >
+                <X size={22} />
+              </button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '60vh', overflowY: 'auto', paddingRight: '4px' }}>
+              {notifications.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-secondary)' }}>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>📭</div>
+                  <p style={{ fontSize: '0.9rem' }}>لا توجد إشعارات بعد</p>
+                </div>
+              ) : (
+                notifications.map(notif => (
+                  <div 
+                    key={notif.id} 
+                    style={{
+                      padding: '16px',
+                      background: notif.read ? 'rgba(255, 255, 255, 0.02)' : 'rgba(226, 201, 126, 0.05)',
+                      border: '1px solid',
+                      borderColor: notif.read ? 'var(--border)' : 'rgba(226, 201, 126, 0.2)',
+                      borderRadius: '12px',
+                      position: 'relative',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {!notif.read && (
+                      <span style={{
+                        position: 'absolute',
+                        top: '16px',
+                        left: '16px',
+                        width: '8px',
+                        height: '8px',
+                        background: 'var(--gold)',
+                        borderRadius: '50%'
+                      }} />
+                    )}
+                    <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: notif.read ? 'var(--text-primary)' : 'var(--gold)', marginBottom: '6px' }}>
+                      {notif.title}
+                    </h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5', marginBottom: '8px' }}>
+                      {notif.body}
+                    </p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', opacity: 0.6 }}>
+                        {notif.createdAt?.seconds ? new Date(notif.createdAt.seconds * 1000).toLocaleString('ar-EG') : 'الآن'}
+                      </span>
+                      {!notif.read && (
+                        <button
+                          onClick={async () => {
+                            if (!notif.id) return;
+                            await markNotificationAsRead(notif.id);
+                            setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--gold)',
+                            fontSize: '0.75rem',
+                            cursor: 'pointer',
+                            fontWeight: 600,
+                            padding: '2px 6px'
+                          }}
+                        >
+                          تحديد كمقروء
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            
+            <button 
+              className="btn-gold" 
+              onClick={async () => {
+                const unread = notifications.filter(n => !n.read);
+                await Promise.all(unread.map(n => n.id ? markNotificationAsRead(n.id) : Promise.resolve()));
+                setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+                toast.success('تم تحديد الكل كمقروء ✅');
+              }}
+              disabled={notifications.filter(n => !n.read).length === 0}
+              style={{ marginTop: '20px', width: '100%', padding: '12px' }}
+            >
+              تحديد الكل كمقروء
+            </button>
           </div>
         </div>
       )}

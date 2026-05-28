@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { serverKey, tokens, title, body } = await request.json();
+    const { serverKey, tokens, title, body, clickAction } = await request.json();
 
     if (!serverKey || !tokens || !Array.isArray(tokens) || tokens.length === 0) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
         notification: {
           title: title || 'طلب خدمة جديد 🔔',
           body: body || 'لديك طلب جديد قيد المراجعة',
-          click_action: '/admin',
+          click_action: clickAction || '/dashboard',
         },
       }),
     });
