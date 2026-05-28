@@ -1,40 +1,36 @@
 import { NextResponse } from 'next/server';
 import * as admin from 'firebase-admin';
 
-// Initialize Firebase Admin SDK
-if (!admin.apps.length) {
-  try {
-    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY
-      ?.replace(/^"|"$/g, '') // Remove surrounding quotes if pasted with quotes
-      ?.replace(/\\n/g, '\n');
-
-    if (projectId && clientEmail && privateKey) {
-      admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId,
-          clientEmail,
-          privateKey,
-        }),
-      });
-    } else {
-      console.log('Firebase Admin init fallback because of missing env vars:', {
-        hasProjectId: !!projectId,
-        hasClientEmail: !!clientEmail,
-        hasPrivateKey: !!privateKey
-      });
-      // Fallback for default initialization (works automatically if running on Firebase Hosting/Functions or with default envs)
-      admin.initializeApp({
-        projectId: projectId || 'mr-sailnt',
-      });
-    }
-  } catch (err) {
-    console.error('Firebase Admin initialization error:', err);
-  }
-}
-
 export async function POST(request: Request) {
+  // Initialize Firebase Admin SDK using clean standard method
+  if (!admin.apps.length) {
+    try {
+      const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'mr-sailnt';
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+      const privateKey = process.env.FIREBASE_PRIVATE_KEY
+        ?.replace(/^"|"$/g, '') // Remove surrounding quotes if pasted with quotes
+        ?.replace(/\\n/g, '\n');
+
+      if (projectId && clientEmail && privateKey) {
+        admin.initializeApp({
+          credential: admin.credential.cert({
+            projectId,
+            clientEmail,
+            privateKey,
+          }),
+        });
+        console.log('Firebase Admin initialized successfully with credentials.');
+      } else {
+        console.warn('Firebase Admin initialized with fallback project ID (missing credentials).');
+        admin.initializeApp({
+          projectId,
+        });
+      }
+    } catch (err) {
+      console.error('Firebase Admin initialization error:', err);
+    }
+  }
+
   try {
     // 1. Authenticate Request using Firebase ID Token
     const authHeader = request.headers.get('Authorization');
