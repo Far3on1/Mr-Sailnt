@@ -11,7 +11,7 @@ const tajawal = Tajawal({
 });
 
 export const metadata: Metadata = {
-  title: "Mr Sailnt | خدمات احترافية",
+  title: "Mr Sailnt Store",
   description: "احصل على أفضل الخدمات الرقمية بأسعار مناسبة مع Mr Sailnt",
   keywords: "خدمات رقمية, Mr Sailnt, خدمات احترافية",
 };
