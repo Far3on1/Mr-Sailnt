@@ -107,7 +107,7 @@ export default function Home() {
       {/* HERO */}
       <section style={{ padding: '160px 24px 80px', maxWidth: '900px', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'inline-block', background: 'rgba(226,201,126,0.08)', border: '1px solid rgba(226,201,126,0.2)', borderRadius: '50px', padding: '6px 20px', marginBottom: '24px', fontSize: '0.85rem', color: 'var(--gold)' }}>
-          ✨ خدمات رقمية احترافية
+          ✨ متجر سايلنت ✨
         </div>
         <h1 className="hero-title" style={{ marginBottom: '24px' }}>
           مرحباً بك في<br />
