@@ -200,6 +200,34 @@ export const updateOrderStatus = async (txId: string, status: 'pending' | 'in_pr
   }
 };
 
+// Deliver a service result to the client (saves delivery note + marks completed + notifies client)
+export const deliverService = async (txId: string, deliveryNote: string) => {
+  // 1. Save delivery note and mark as completed
+  await updateDoc(doc(db, 'transactions', txId), {
+    deliveryNote,
+    status: 'completed',
+    deliveredAt: serverTimestamp(),
+  });
+
+  // 2. Fetch transaction to get userId and serviceName
+  try {
+    const txSnap = await getDoc(doc(db, 'transactions', txId));
+    if (txSnap.exists()) {
+      const tx = txSnap.data();
+      const userId = tx.userId;
+      const serviceName = tx.serviceName || 'الخدمة المطلوبة';
+      // Create an in-app notification for the client
+      await createNotification(
+        userId,
+        `✅ تم تسليم خدمة: ${serviceName}`,
+        `بياناتك جاهزة! افتح لوحتك لمشاهدة التسليم.`
+      );
+    }
+  } catch (err) {
+    console.error('Error notifying client after delivery:', err);
+  }
+};
+
 // =================== DEPOSIT REQUESTS ===================
 export interface DepositRequest {
   id: string;

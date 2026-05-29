@@ -530,6 +530,23 @@ export default function Dashboard() {
                                   رقم المستهدف: {tx.targetNumber} | واتساب: {tx.whatsappNumber}
                                 </div>
                               )}
+                              {tx.deliveryNote && (
+                                <div style={{
+                                  marginTop: '10px',
+                                  background: 'rgba(34,197,94,0.08)',
+                                  border: '1px solid rgba(34,197,94,0.25)',
+                                  borderRadius: '10px',
+                                  padding: '10px 14px',
+                                  fontSize: '0.85rem',
+                                  color: '#4ade80',
+                                  whiteSpace: 'pre-wrap',
+                                  wordBreak: 'break-word',
+                                  lineHeight: 1.8,
+                                }}>
+                                  <div style={{ fontWeight: 700, marginBottom: '6px', color: '#22c55e' }}>📦 بيانات التسليم:</div>
+                                  {tx.deliveryNote}
+                                </div>
+                              )}
                             </td>
                             <td style={{ color: tx.type === 'credit' ? '#4ade80' : '#f87171', fontWeight: 700 }}>
                               {tx.type === 'credit' ? '+' : ''}{tx.amount} ج.م

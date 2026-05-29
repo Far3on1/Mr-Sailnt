@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import {
   getServices, addService, updateService, deleteService,
   getAllUsers, addBalanceToUser, Service, UserRecord, updateUserTier,
-  getAllTransactions, updateOrderStatus,
+  getAllTransactions, updateOrderStatus, deliverService,
   getPaymentSettings, updatePaymentSettings, PaymentSettings,
   getTelegramSecrets, updateTelegramSecrets
 } from '@/lib/firestore';
@@ -52,6 +52,12 @@ export default function AdminPage() {
   const [balanceAmount, setBalanceAmount] = useState('');
   const [balanceNote, setBalanceNote] = useState('');
   const [balanceSaving, setBalanceSaving] = useState(false);
+
+  // Delivery Modal State
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false);
+  const [deliveryTx, setDeliveryTx] = useState<any>(null);
+  const [deliveryNote, setDeliveryNote] = useState('');
+  const [deliverySaving, setDeliverySaving] = useState(false);
 
   // Payment Settings State
   const [orangeCashNumber, setOrangeCashNumber] = useState('01201426302');
@@ -223,6 +229,25 @@ export default function AdminPage() {
       await loadData();
     } catch {
       toast.error('فشل تحديث الحالة');
+    }
+  };
+
+  // ---- Deliver Service ----
+  const handleDeliver = async () => {
+    if (!deliveryTx) return;
+    if (!deliveryNote.trim()) return toast.error('من فضلك اكتب بيانات التسليم');
+    setDeliverySaving(true);
+    try {
+      await deliverService(deliveryTx.id, deliveryNote.trim());
+      toast.success(`✅ تم تسليم الخدمة لـ ${deliveryTx.displayName || 'العميل'} بنجاح!`);
+      setShowDeliveryModal(false);
+      setDeliveryTx(null);
+      setDeliveryNote('');
+      await loadData();
+    } catch {
+      toast.error('حدث خطأ أثناء التسليم');
+    } finally {
+      setDeliverySaving(false);
     }
   };
 
@@ -588,7 +613,12 @@ export default function AdminPage() {
                           {tx.status === 'completed' && <span style={{ background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>تم التسليم</span>}
                         </td>
                         <td>
-                          <div style={{ display: 'flex', gap: '4px' }}>
+                          {tx.deliveryNote && (
+                            <div style={{ fontSize: '0.75rem', color: '#22c55e', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '8px', padding: '6px 10px', marginBottom: '6px', maxWidth: '200px', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
+                              📦 {tx.deliveryNote}
+                            </div>
+                          )}
+                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                             <button
                               onClick={() => handleUpdateStatus(tx.id, 'in_progress')}
                               style={{ padding: '5px 8px', fontSize: '0.75rem', borderRadius: '6px', cursor: 'pointer', background: 'rgba(59,130,246,0.15)', border: '1px solid #3b82f6', color: '#3b82f6' }}
@@ -597,11 +627,10 @@ export default function AdminPage() {
                               ابدأ العمل
                             </button>
                             <button
-                              onClick={() => handleUpdateStatus(tx.id, 'completed')}
+                              onClick={() => { setDeliveryTx(tx); setDeliveryNote(tx.deliveryNote || ''); setShowDeliveryModal(true); }}
                               style={{ padding: '5px 8px', fontSize: '0.75rem', borderRadius: '6px', cursor: 'pointer', background: 'rgba(34,197,94,0.15)', border: '1px solid #22c55e', color: '#22c55e' }}
-                              disabled={tx.status === 'completed'}
                             >
-                              تم التسليم
+                              📦 تسليم
                             </button>
                           </div>
                         </td>
@@ -882,6 +911,52 @@ export default function AdminPage() {
             <button className="btn-gold" onClick={() => setActiveScreenshot(null)} style={{ marginTop: '20px', width: '100%' }}>
               إغلاق المعاينة
             </button>
+          </div>
+        </div>
+      )}\n\n      {/* ===== DELIVERY MODAL ===== */}
+      {showDeliveryModal && deliveryTx && (
+        <div className="modal-overlay" onClick={() => setShowDeliveryModal(false)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--gold)' }}>📦 تسليم الخدمة للعميل</h3>
+              <button onClick={() => setShowDeliveryModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '1.4rem' }}>×</button>
+            </div>
+
+            {/* Order Info */}
+            <div style={{ background: 'rgba(226,201,126,0.06)', border: '1px solid rgba(226,201,126,0.15)', borderRadius: '12px', padding: '14px 16px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.88rem' }}>
+                <div><span style={{ color: 'var(--text-secondary)' }}>العميل: </span><strong>{deliveryTx.displayName}</strong></div>
+                <div><span style={{ color: 'var(--text-secondary)' }}>الخدمة: </span><strong style={{ color: 'var(--gold)' }}>{deliveryTx.serviceName}</strong></div>
+                <div><span style={{ color: 'var(--text-secondary)' }}>الرقم المطلوب: </span><strong>{deliveryTx.targetNumber || '-'}</strong></div>
+              </div>
+            </div>
+
+            {/* Delivery Note Input */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '10px', display: 'block', fontWeight: 600 }}>
+                بيانات التسليم (ستظهر للعميل في لوحته) *
+              </label>
+              <textarea
+                className="input-gold"
+                placeholder={"مثال:\nالاسم: محمد أحمد\nرقم الهوية: 29901011234567\nتاريخ الميلاد: 1999/01/01"}
+                value={deliveryNote}
+                onChange={e => setDeliveryNote(e.target.value)}
+                rows={6}
+                style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.7 }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                className="btn-gold"
+                onClick={handleDeliver}
+                disabled={deliverySaving}
+                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              >
+                {deliverySaving ? 'جاري التسليم...' : '📦 إرسال للعميل'}
+              </button>
+              <button className="btn-outline" onClick={() => setShowDeliveryModal(false)} style={{ flex: 1 }}>إلغاء</button>
+            </div>
           </div>
         </div>
       )}
