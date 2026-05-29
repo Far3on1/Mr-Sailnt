@@ -12,7 +12,6 @@ export default function Home() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
@@ -204,68 +203,12 @@ export default function Home() {
         <div className="navbar-logo">Mr Sailnt</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {user ? (
-            <>
-              <div style={{ position: 'relative' }}>
-                <button
-                  onClick={() => setNavMenuOpen(v => !v)}
-                  className="btn-outline"
-                  style={{ padding: '8px 12px', fontSize: '1.2rem', lineHeight: 1, display: 'flex', alignItems: 'center' }}
-                >☰</button>
-
-                {navMenuOpen && (
-                  <>
-                    {/* Backdrop to close on outside click */}
-                    <div
-                      onClick={() => setNavMenuOpen(false)}
-                      style={{ position: 'fixed', inset: 0, zIndex: 999 }}
-                    />
-                    {/* Dropdown */}
-                    <div style={{
-                      position: 'absolute',
-                      top: 'calc(100% + 8px)',
-                      left: 0,
-                      background: 'rgba(14,14,28,0.97)',
-                      border: '1px solid var(--border)',
-                      borderRadius: '14px',
-                      padding: '8px',
-                      minWidth: '170px',
-                      zIndex: 1000,
-                      boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '4px',
-                    }}>
-                      <Link href="/" onClick={() => setNavMenuOpen(false)} style={{ textDecoration: 'none' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '10px', color: 'var(--text-primary)', fontSize: '0.9rem', cursor: 'pointer', transition: 'background 0.2s' }}
-                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(226,201,126,0.08)')}
-                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                        >
-                          🏠 الرئيسية
-                        </div>
-                      </Link>
-                      <Link href="/dashboard" onClick={() => setNavMenuOpen(false)} style={{ textDecoration: 'none' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '10px', color: 'var(--gold)', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}
-                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(226,201,126,0.08)')}
-                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                        >
-                          📋 سجل المعاملات
-                        </div>
-                      </Link>
-                      {isAdmin && (
-                        <Link href="/admin" onClick={() => setNavMenuOpen(false)} style={{ textDecoration: 'none' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '10px', color: '#a78bfa', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}
-                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(167,139,250,0.08)')}
-                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                          >
-                            ⚡ لوحة الأدمن
-                          </div>
-                        </Link>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            </>
+            <button
+              onClick={() => setMenuOpen(true)}
+              style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
+            >
+              <span style={{ fontSize: '1.8rem', lineHeight: 1 }}>☰</span>
+            </button>
           ) : (
             <Link href="/auth" style={{ textDecoration: 'none' }}>
               <button className="btn-gold" style={{ padding: '10px 20px', fontSize: '0.9rem' }}>دخول / تسجيل</button>
@@ -273,6 +216,50 @@ export default function Home() {
           )}
         </div>
       </nav>
+
+      {/* SIDEBAR OVERLAY */}
+      {menuOpen && (
+        <div
+          onClick={() => setMenuOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 2000, backdropFilter: 'blur(2px)' }}
+        />
+      )}
+
+      {/* SIDEBAR */}
+      <div className={`sidebar ${menuOpen ? 'show' : ''}`}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <div className="navbar-logo" style={{ fontSize: '1.4rem', padding: '0 8px' }}>Mr Sailnt</div>
+          <button onClick={() => setMenuOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.6rem', cursor: 'pointer' }}>×</button>
+        </div>
+
+        <Link href="/" className="sidebar-item" style={{ textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
+          🏠 الرئيسية
+        </Link>
+
+        <Link href="/dashboard" className="sidebar-item" style={{ textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
+          📋 سجل المعاملات
+        </Link>
+
+        {isAdmin && (
+          <Link href="/admin" className="sidebar-item" style={{ textDecoration: 'none', color: 'var(--gold)' }} onClick={() => setMenuOpen(false)}>
+            ⚡ لوحة الأدمن
+          </Link>
+        )}
+
+        <div style={{ flex: 1 }} />
+
+        <div style={{ padding: '8px', borderTop: '1px solid var(--border)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <a href="https://wa.me/201201426302" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'var(--text-secondary)', fontSize: '0.85rem', paddingRight: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            💬 واتساب: 01201426302
+          </a>
+          <a href="https://t.me/Mr_Silent999" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'var(--text-secondary)', fontSize: '0.85rem', paddingRight: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            ✈️ تليجرام الشخصي
+          </a>
+          <a href="https://t.me/MrSailnt_Bot" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'var(--gold)', fontSize: '0.85rem', paddingRight: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
+            🤖 بوت الخدمات
+          </a>
+        </div>
+      </div>
 
       {/* HERO */}
       <section style={{ padding: '120px 20px 60px', maxWidth: '900px', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
