@@ -346,62 +346,66 @@ export default function AdminPage() {
       
       {/* NAVBAR */}
       <nav className="navbar">
-        <div className="navbar-logo">Mr Sailnt (أدمن)</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <Link href="/" style={{ textDecoration: 'none' }}>
+          <div className="navbar-logo">Mr Sailnt (أدمن)</div>
+        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <button className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>الرئيسية</button>
+          </Link>
+          <Link href="/dashboard" style={{ textDecoration: 'none' }}>
+            <button className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>سجل المعاملات</button>
+          </Link>
+          <Link href="/admin" style={{ textDecoration: 'none' }}>
+            <button className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem', color: 'var(--gold)', borderColor: 'var(--border)' }}>لوحة الأدمن</button>
+          </Link>
           <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            onClick={async () => { await logout(); router.push('/'); }}
+            className="btn-outline"
+            style={{ padding: '6px 10px', fontSize: '0.8rem', color: '#f87171', borderColor: 'rgba(248,113,113,0.15)' }}
           >
-            <span style={{ fontSize: '1.8rem' }}>☰</span>
+            خروج
           </button>
         </div>
       </nav>
 
       <div style={{ display: 'flex', flex: 1, position: 'relative', paddingTop: '72px' }}>
-        {/* Sidebar */}
-        <div className={`sidebar ${menuOpen ? 'show' : ''}`}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 8px' }}>
-            <div>
-              <div className="navbar-logo" style={{ fontSize: '1.3rem' }}>Mr Sailnt</div>
-              <div className="badge-admin" style={{ display: 'inline-block', marginTop: '6px', fontSize: '0.7rem' }}>لوحة الأدمن</div>
-            </div>
-            <button className="mobile-close" onClick={() => setMenuOpen(false)} style={{ display: 'none', background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
-          </div>
-          <div style={{ height: '1px', background: 'var(--border)', margin: '16px 0' }} />
-
-          {([
-            { id: 'overview', icon: <LayoutDashboard size={18} />, label: 'نظرة عامة' },
-            { id: 'services', icon: <Package size={18} />, label: 'الخدمات' },
-            { id: 'users', icon: <Users size={18} />, label: 'المستخدمين' },
-            { id: 'orders', icon: <Wallet size={18} />, label: 'طلبات الخدمات' },
-            { id: 'settings', icon: <Settings size={18} />, label: 'إعدادات الدفع' },
-          ] as const).map(item => (
-            <div key={item.id} className={`sidebar-item ${tab === item.id ? 'active' : ''}`} onClick={() => { setTab(item.id); setMenuOpen(false); }}>
-              {item.icon} {item.label}
-            </div>
-          ))}
-
-          <div style={{ height: '1px', background: 'var(--border)', margin: '8px 0' }} />
-          <Link href="/" className="sidebar-item" style={{ textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
-            <Home size={18} /> الرئيسية
-          </Link>
-          <div style={{ flex: 1 }} />
-          <button onClick={async () => { await logout(); router.push('/'); }}
-            className="sidebar-item" style={{ width: '100%', border: 'none', background: 'transparent', color: '#f87171', cursor: 'pointer', textAlign: 'right', marginTop: '16px' }}>
-            <LogOut size={18} /> خروج
-          </button>
-        </div>
-
-        {/* SIDEBAR OVERLAY */}
-        {menuOpen && (
-          <div
-            onClick={() => setMenuOpen(false)}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 2000, backdropFilter: 'blur(2px)' }}
-          />
-        )}
 
         {/* Main */}
         <div className="main-content-layout" style={{ flex: 1, padding: '40px 32px' }}>
+          {/* Horizontal Tabs */}
+          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '16px', marginBottom: '24px', borderBottom: '1px solid var(--border)' }} className="hide-scrollbar">
+            {([
+              { id: 'overview', icon: <LayoutDashboard size={16} />, label: 'نظرة عامة' },
+              { id: 'services', icon: <Package size={16} />, label: 'الخدمات' },
+              { id: 'users', icon: <Users size={16} />, label: 'المستخدمين' },
+              { id: 'orders', icon: <Wallet size={16} />, label: 'طلبات الخدمات' },
+              { id: 'settings', icon: <Settings size={16} />, label: 'إعدادات الدفع' },
+            ] as const).map(item => (
+              <button
+                key={item.id}
+                onClick={() => setTab(item.id)}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  whiteSpace: 'nowrap',
+                  background: tab === item.id ? 'rgba(226,201,126,0.1)' : 'transparent',
+                  border: '1px solid',
+                  borderRadius: '10px',
+                  borderColor: tab === item.id ? 'var(--gold)' : 'var(--border)',
+                  color: tab === item.id ? 'var(--gold)' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {item.icon}
+                {item.label}
+              </button>
+            ))}
+          </div>
         <h1 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '8px' }}>
           {tab === 'overview' ? 'نظرة عامة' : tab === 'services' ? 'إدارة الخدمات' : tab === 'users' ? 'إدارة المستخدمين' : tab === 'orders' ? 'إدارة طلبات الخدمات' : 'إعدادات الدفع'}
         </h1>
