@@ -344,18 +344,20 @@ export default function AdminPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
       
-      {/* Mobile Top Navigation Bar */}
-      <div className="mobile-header" style={{ display: 'none', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', zIndex: 110 }}>
-        <div className="navbar-logo" style={{ fontSize: '1.2rem' }}>Mr Sailnt (أدمن)</div>
-        <button 
-          onClick={() => setMenuOpen(!menuOpen)} 
-          style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-        >
-          <span style={{ fontSize: '1.8rem' }}>☰</span>
-        </button>
-      </div>
+      {/* NAVBAR */}
+      <nav className="navbar">
+        <div className="navbar-logo">Mr Sailnt (أدمن)</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+          >
+            <span style={{ fontSize: '1.8rem' }}>☰</span>
+          </button>
+        </div>
+      </nav>
 
-      <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
+      <div style={{ display: 'flex', flex: 1, position: 'relative', paddingTop: '72px' }}>
         {/* Sidebar */}
         <div className={`sidebar ${menuOpen ? 'show' : ''}`}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 8px' }}>
@@ -390,8 +392,16 @@ export default function AdminPage() {
           </button>
         </div>
 
+        {/* SIDEBAR OVERLAY */}
+        {menuOpen && (
+          <div
+            onClick={() => setMenuOpen(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 2000, backdropFilter: 'blur(2px)' }}
+          />
+        )}
+
         {/* Main */}
-        <div className="main-content-layout" style={{ marginRight: '260px', flex: 1, padding: '40px 32px' }}>
+        <div className="main-content-layout" style={{ flex: 1, padding: '40px 32px' }}>
         <h1 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '8px' }}>
           {tab === 'overview' ? 'نظرة عامة' : tab === 'services' ? 'إدارة الخدمات' : tab === 'users' ? 'إدارة المستخدمين' : tab === 'orders' ? 'إدارة طلبات الخدمات' : 'إعدادات الدفع'}
         </h1>

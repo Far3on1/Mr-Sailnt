@@ -421,18 +421,24 @@ input:checked + .toggle-slider::before { transform: translateX(-24px); }
 
 /* ======== SIDEBAR NAV ======== */
 .sidebar {
-  width: 260px;
-  background: rgba(14, 14, 28, 0.95);
-  border-left: 1px solid var(--border);
+  position: fixed !important;
+  top: 0;
+  right: -100%;
+  width: 280px;
   height: 100vh;
-  position: fixed;
-  right: 0; top: 0;
+  z-index: 2100;
+  background: rgba(10, 10, 20, 0.98) !important;
+  box-shadow: -5px 0 25px rgba(0, 0, 0, 0.5);
+  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 24px 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  z-index: 100;
   overflow-y: auto;
+  border-left: 1px solid var(--border);
+}
+.sidebar.show {
+  right: 0 !important;
 }
 .sidebar-item {
   display: flex;
@@ -452,56 +458,22 @@ input:checked + .toggle-slider::before { transform: translateX(-24px); }
   color: var(--gold);
 }
 
-.desktop-only {
-  display: flex !important;
+.mobile-close {
+  display: block !important;
 }
-.mobile-only {
-  display: none !important;
+
+.main-content-layout,
+div[style*="marginRight: 260px"],
+div[style*="margin-right: 260px"],
+div[style*="marginRight: '260px'"] {
+  margin-right: 0 !important;
 }
 
 /* ======== MOBILE RESPONSIVENESS MEDIA QUERIES ======== */
 
 /* Tablet and below */
 @media (max-width: 900px) {
-  .desktop-only {
-    display: none !important;
-  }
-  .mobile-only {
-    display: flex !important;
-  }
-  .sidebar {
-    position: fixed !important;
-    top: 0;
-    right: -100%;
-    width: 280px;
-    height: 100vh;
-    z-index: 2100;
-    background: rgba(10, 10, 20, 0.98) !important;
-    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.5);
-    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    flex-direction: column !important;
-    align-items: stretch !important;
-    justify-content: flex-start !important;
-  }
-
-  .sidebar.show {
-    right: 0 !important;
-  }
-
-  .mobile-header {
-    display: flex !important;
-  }
-
-  .mobile-close {
-    display: block !important;
-  }
-
-  /* Reset content margins when sidebar is hidden */
-  .main-content-layout,
-  div[style*="marginRight: 260px"],
-  div[style*="margin-right: 260px"],
-  div[style*="marginRight: '260px'"] {
-    margin-right: 0 !important;
+  .main-content-layout {
     padding: 20px 14px !important;
   }
 }
