@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { getServices, Service, purchaseService, getPaymentSettings, PaymentSettings } from '@/lib/firestore';
-import { Menu, X, Star, Zap, Shield, ChevronLeft, Wallet } from 'lucide-react';
+import { Menu, X, Star, Zap, Shield, ChevronLeft, Wallet, Home as HomeIcon, Clock, LogOut } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Home() {
   const { user, userData, isAdmin } = useAuth();
+  const router = useRouter();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -28,6 +30,16 @@ export default function Home() {
     orangeCashNumber: '01201426302',
     instaPayNumber: '01201426302'
   });
+
+  const handleLogout = async () => {
+    try {
+      const { logout } = await import('@/lib/auth');
+      await logout();
+      router.push('/auth');
+    } catch (err) {
+      toast.error('فشل تسجيل الخروج');
+    }
+  };
 
   useEffect(() => {
     getPaymentSettings()
@@ -245,36 +257,66 @@ export default function Home() {
       <div className={`sidebar ${menuOpen ? 'show' : ''}`}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <div className="navbar-logo" style={{ fontSize: '1.4rem', padding: '0 8px' }}>Mr Sailnt</div>
-          <button onClick={() => setMenuOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.6rem', cursor: 'pointer' }}>×</button>
+          <button className="mobile-close" onClick={() => setMenuOpen(false)} style={{ display: 'none', background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
         </div>
 
-        <Link href="/" className="sidebar-item" style={{ textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
-          🏠 الرئيسية
+        <Link href="/" className="sidebar-item active" style={{ textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
+          <HomeIcon size={18} /> الرئيسية
         </Link>
 
         <Link href="/dashboard" className="sidebar-item" style={{ textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
-          📋 سجل المعاملات
+          <Clock size={18} /> سجل المعاملات
         </Link>
 
         {isAdmin && (
           <Link href="/admin" className="sidebar-item" style={{ textDecoration: 'none', color: 'var(--gold)' }} onClick={() => setMenuOpen(false)}>
-            ⚡ لوحة الأدمن
+            <Star size={18} /> لوحة الأدمن
           </Link>
         )}
 
         <div style={{ flex: 1 }} />
 
-        <div style={{ padding: '8px', borderTop: '1px solid var(--border)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <a href="https://wa.me/201201426302" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'var(--text-secondary)', fontSize: '0.85rem', paddingRight: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div style={{ padding: '8px', borderTop: '1px solid var(--border)', marginTop: '16px', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px', paddingRight: '8px' }}>روابط التواصل والدعم:</div>
+          <a href="https://wa.me/201201426302" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'var(--text-secondary)', fontSize: '0.80rem', paddingRight: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             💬 واتساب: 01201426302
           </a>
-          <a href="https://t.me/Mr_Silent999" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'var(--text-secondary)', fontSize: '0.85rem', paddingRight: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <a href="https://t.me/Mr_Silent999" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'var(--text-secondary)', fontSize: '0.80rem', paddingRight: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             ✈️ تليجرام الشخصي
           </a>
-          <a href="https://t.me/MrSailnt_Bot" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'var(--gold)', fontSize: '0.85rem', paddingRight: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
-            🤖 بوت الخدمات
+          <a href="https://t.me/MrSailnt_Bot" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'var(--gold)', fontSize: '0.80rem', paddingRight: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
+            🤖 بوت الخدمات: @MrSailnt_Bot
           </a>
         </div>
+
+        {/* User profile & logout at the bottom */}
+        {user && (
+          <div style={{ padding: '12px 8px 4px', borderTop: '1px solid var(--border)', marginTop: '12px' }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {userData?.displayName || 'مستخدم'}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {user.email}
+            </div>
+            <button 
+              onClick={handleLogout}
+              style={{ 
+                width: '100%', 
+                background: 'none', 
+                border: 'none', 
+                color: '#f87171', 
+                cursor: 'pointer', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px', 
+                fontSize: '0.85rem', 
+                padding: '8px 0' 
+              }}
+            >
+              <LogOut size={16} /> تسجيل الخروج
+            </button>
+          </div>
+        )}
       </div>
 
       {/* HERO */}
