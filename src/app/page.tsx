@@ -12,6 +12,7 @@ export default function Home() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
@@ -204,15 +205,66 @@ export default function Home() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {user ? (
             <>
-              {/* balance removed */}
-              {isAdmin && (
-                <Link href="/admin" style={{ textDecoration: 'none' }}>
-                  <div className="badge-admin" style={{ cursor: 'pointer' }}>أدمن</div>
-                </Link>
-              )}
-              <Link href="/dashboard" style={{ textDecoration: 'none' }}>
-                <button className="btn-outline" style={{ padding: '8px 12px', fontSize: '1.2rem', lineHeight: 1, display: 'flex', alignItems: 'center' }}>☰</button>
-              </Link>
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setNavMenuOpen(v => !v)}
+                  className="btn-outline"
+                  style={{ padding: '8px 12px', fontSize: '1.2rem', lineHeight: 1, display: 'flex', alignItems: 'center' }}
+                >☰</button>
+
+                {navMenuOpen && (
+                  <>
+                    {/* Backdrop to close on outside click */}
+                    <div
+                      onClick={() => setNavMenuOpen(false)}
+                      style={{ position: 'fixed', inset: 0, zIndex: 999 }}
+                    />
+                    {/* Dropdown */}
+                    <div style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 8px)',
+                      left: 0,
+                      background: 'rgba(14,14,28,0.97)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '14px',
+                      padding: '8px',
+                      minWidth: '170px',
+                      zIndex: 1000,
+                      boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px',
+                    }}>
+                      <Link href="/" onClick={() => setNavMenuOpen(false)} style={{ textDecoration: 'none' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '10px', color: 'var(--text-primary)', fontSize: '0.9rem', cursor: 'pointer', transition: 'background 0.2s' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(226,201,126,0.08)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          🏠 الرئيسية
+                        </div>
+                      </Link>
+                      <Link href="/dashboard" onClick={() => setNavMenuOpen(false)} style={{ textDecoration: 'none' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '10px', color: 'var(--gold)', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(226,201,126,0.08)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          📋 سجل المعاملات
+                        </div>
+                      </Link>
+                      {isAdmin && (
+                        <Link href="/admin" onClick={() => setNavMenuOpen(false)} style={{ textDecoration: 'none' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '10px', color: '#a78bfa', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(167,139,250,0.08)')}
+                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                          >
+                            ⚡ لوحة الأدمن
+                          </div>
+                        </Link>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
             </>
           ) : (
             <Link href="/auth" style={{ textDecoration: 'none' }}>
