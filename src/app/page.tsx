@@ -211,7 +211,7 @@ export default function Home() {
                 </Link>
               )}
               <Link href="/dashboard" style={{ textDecoration: 'none' }}>
-                <button className="btn-outline" style={{ padding: '8px 16px', fontSize: '0.9rem' }}>لوحتي</button>
+                <button className="btn-outline" style={{ padding: '8px 12px', fontSize: '1.2rem', lineHeight: 1, display: 'flex', alignItems: 'center' }}>☰</button>
               </Link>
             </>
           ) : (
