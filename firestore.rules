@@ -86,6 +86,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /settings/orderCounter {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated(); // Any logged-in user can increment the counter
+    }
+
     // =================== DEPRECATED PUSH TOKENS ===================
     // Block all legacy push token accesses just in case
     match /admin_push_tokens/{document} {

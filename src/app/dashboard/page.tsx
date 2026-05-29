@@ -196,8 +196,8 @@ export default function Dashboard() {
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
-      const maxW = 1200;
-      const maxH = 1200;
+      const maxW = 800;
+      const maxH = 800;
       let w = img.width;
       let h = img.height;
       if (w > maxW) { h = (maxW / w) * h; w = maxW; }
@@ -207,7 +207,7 @@ export default function Dashboard() {
       canvas.height = h;
       const ctx = canvas.getContext('2d')!;
       ctx.drawImage(img, 0, 0, w, h);
-      const compressed = canvas.toDataURL('image/jpeg', 0.7);
+      const compressed = canvas.toDataURL('image/jpeg', 0.5);
       setDepositReceipt(compressed);
       URL.revokeObjectURL(url);
     };
