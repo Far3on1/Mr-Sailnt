@@ -223,7 +223,7 @@ export default function Home() {
       </nav>
 
       {/* HERO */}
-      <section style={{ padding: '160px 24px 80px', maxWidth: '900px', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+      <section style={{ padding: '120px 20px 60px', maxWidth: '900px', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
         <div className="floating-badge" style={{ display: 'inline-block', background: 'rgba(226,201,126,0.08)', border: '1px solid rgba(226,201,126,0.2)', borderRadius: '50px', padding: '6px 20px', marginBottom: '24px', fontSize: '0.85rem', color: 'var(--gold)' }}>
           ✨ متجر سايلنت ✨
         </div>

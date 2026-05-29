@@ -453,11 +453,9 @@ input:checked + .toggle-slider::before { transform: translateX(-24px); }
 }
 
 /* ======== MOBILE RESPONSIVENESS MEDIA QUERIES ======== */
-@media (max-width: 768px) {
-  .mobile-header {
-    display: flex !important;
-  }
 
+/* Tablet and below */
+@media (max-width: 900px) {
   .sidebar {
     position: fixed !important;
     top: 0;
@@ -477,31 +475,204 @@ input:checked + .toggle-slider::before { transform: translateX(-24px); }
     right: 0 !important;
   }
 
+  .mobile-header {
+    display: flex !important;
+  }
+
   .mobile-close {
     display: block !important;
   }
 
-  /* Resetting content margins */
+  /* Reset content margins when sidebar is hidden */
   .main-content-layout,
   div[style*="marginRight: 260px"],
-  div[style*="margin-right: 260px"] {
+  div[style*="margin-right: 260px"],
+  div[style*="marginRight: '260px'"] {
     margin-right: 0 !important;
-    padding: 24px 16px !important;
+    padding: 20px 14px !important;
   }
+}
 
-  /* Make tables scrollable and responsive */
+/* Mobile phones */
+@media (max-width: 768px) {
+  /* ---- Typography ---- */
+  h1 { font-size: 1.4rem !important; }
+  h2 { font-size: 1.2rem !important; }
+  h3 { font-size: 1rem !important; }
+  .section-title { font-size: 1.5rem !important; }
+
+  /* ---- Tables: horizontal scroll ---- */
   .glass-card {
     overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
     width: 100%;
   }
 
   .data-table {
-    min-width: 650px;
+    min-width: 600px;
   }
 
+  .data-table th,
+  .data-table td {
+    padding: 10px 10px !important;
+    font-size: 0.8rem !important;
+    white-space: nowrap;
+  }
+
+  /* ---- Stat Cards ---- */
   .stat-card {
-    padding: 16px !important;
+    padding: 14px !important;
+  }
+
+  /* ---- Modals ---- */
+  .modal-overlay {
+    padding: 10px !important;
+    align-items: flex-start !important;
+    padding-top: 40px !important;
+  }
+
+  .modal-box {
+    padding: 20px 16px !important;
+    border-radius: 16px !important;
+    max-width: 100% !important;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  /* ---- Forms ---- */
+  .input-gold,
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="file"],
+  textarea,
+  select {
+    font-size: 16px !important; /* prevents zoom on iOS */
+  }
+
+  /* ---- Grid layouts ---- */
+  div[style*="gridTemplateColumns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ---- Stats row ---- */
+  div[style*="grid-template-columns: repeat(4"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  div[style*="grid-template-columns: repeat(3"] {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* ---- Buttons ---- */
+  .btn-gold, .btn-outline, .btn-danger {
+    padding: 10px 16px !important;
+    font-size: 0.85rem !important;
+  }
+
+  /* ---- Service cards grid ---- */
+  div[style*="minmax(300px"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ---- Premium cards ---- */
+  .premium-card {
+    padding: 18px !important;
+  }
+
+  .premium-card:hover {
+    transform: none !important;
+  }
+
+  /* ---- Notification Bell ---- */
+  .btn-notification-bell {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  /* ---- Landing page hero ---- */
+  div[style*="fontSize: '3.5rem'"],
+  div[style*="fontSize: '3rem'"] {
+    font-size: 2rem !important;
+  }
+
+  /* ---- Features grid ---- */
+  div[style*="repeat(auto-fill, minmax(250px"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ---- Admin tabs ---- */
+  div[style*="gap: '6px'"] {
+    flex-wrap: wrap !important;
+  }
+
+  /* ---- Navbar ---- */
+  .navbar {
+    padding: 14px 16px !important;
+  }
+
+  .navbar-logo {
+    font-size: 1.1rem !important;
+  }
+
+  /* ---- Hero ---- */
+  .hero-title {
+    font-size: clamp(1.6rem, 5vw, 2.5rem) !important;
+  }
+
+  /* ---- Stat values ---- */
+  .stat-value {
+    font-size: 1.4rem !important;
+  }
+
+  .stat-label {
+    font-size: 0.8rem !important;
+  }
+
+  /* ---- Verification page ---- */
+  div[style*="fontSize: '2.5rem'"] {
+    font-size: 1.6rem !important;
+  }
+
+  /* ---- Auth page ---- */
+  .glass-card[style*="padding: '36px'"] {
+    padding: 20px !important;
+  }
+
+  /* ---- Search filters row ---- */
+  div[style*="flexWrap: 'wrap'"] {
+    gap: 8px !important;
   }
 }
 
+/* Small phones (< 400px) */
+@media (max-width: 400px) {
+  h1 { font-size: 1.2rem !important; }
+  .section-title { font-size: 1.3rem !important; }
 
+  .modal-box {
+    padding: 16px 12px !important;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 8px 6px !important;
+    font-size: 0.75rem !important;
+  }
+
+  .premium-card {
+    padding: 14px !important;
+  }
+
+  .btn-gold, .btn-outline {
+    padding: 8px 12px !important;
+    font-size: 0.8rem !important;
+  }
+
+  div[style*="grid-template-columns: repeat(4"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}

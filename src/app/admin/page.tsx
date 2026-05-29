@@ -500,7 +500,7 @@ export default function AdminPage() {
             {loading ? (
               <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><div className="spinner" /></div>
             ) : (
-              <div className="glass-card" style={{ overflow: 'hidden' }}>
+              <div className="glass-card" style={{ overflowX: 'auto' }}>
                 <table className="data-table">
                   <thead>
                     <tr>
@@ -573,7 +573,7 @@ export default function AdminPage() {
             {loading ? (
               <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><div className="spinner" /></div>
             ) : (
-              <div className="glass-card" style={{ overflow: 'hidden' }}>
+              <div className="glass-card" style={{ overflowX: 'auto' }}>
                 <table className="data-table">
                   <thead>
                     <tr>
@@ -688,7 +688,7 @@ export default function AdminPage() {
             {loading ? (
               <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><div className="spinner" /></div>
             ) : (
-              <div className="glass-card" style={{ overflow: 'hidden' }}>
+              <div className="glass-card" style={{ overflowX: 'auto' }}>
                 <table className="data-table">
                   <thead>
                     <tr>

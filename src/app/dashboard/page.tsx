@@ -505,7 +505,7 @@ export default function Dashboard() {
                       className="input-gold" 
                       value={historyStatusFilter} 
                       onChange={e => setHistoryStatusFilter(e.target.value as any)} 
-                      style={{ flex: 1, minWidth: '150px', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)', padding: '10px', borderRadius: '10px', fontFamily: 'var(--font-tajawal), sans-serif' }}
+                      style={{ flex: 1, minWidth: '120px', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border)', padding: '10px', borderRadius: '10px', fontFamily: 'var(--font-tajawal), sans-serif' }}
                     >
                       <option value="all">كل الحالات</option>
                       <option value="pending">قيد المراجعة</option>
@@ -514,7 +514,7 @@ export default function Dashboard() {
                     </select>
                   </div>
 
-                  <div className="glass-card" style={{ overflow: 'hidden' }}>
+                  <div className="glass-card" style={{ overflowX: 'auto' }}>
                     <table className="data-table">
                       <thead>
                         <tr>
