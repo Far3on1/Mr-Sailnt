@@ -9,7 +9,7 @@ import { Menu, X, Star, Zap, Shield, ChevronLeft, Wallet, Home as HomeIcon, Cloc
 import toast from 'react-hot-toast';
 
 export default function Home() {
-  const { user, userData, isAdmin } = useAuth();
+  const { user, userData, isAdmin, logout } = useAuth();
   const router = useRouter();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +33,6 @@ export default function Home() {
 
   const handleLogout = async () => {
     try {
-      const { logout } = await import('@/lib/auth');
       await logout();
       router.push('/auth');
     } catch (err) {
