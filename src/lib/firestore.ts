@@ -145,25 +145,25 @@ export const purchaseService = async (
     createdAt: serverTimestamp(),
   });
 
-  // Send Telegram Notification to Admin via serverless route handler
+  // Send Telegram Notification via server-side /api/notify route
   try {
-    const apiSecret = process.env.NEXT_PUBLIC_TELEGRAM_API_SECRET || '';
-
-    const message = `🔔 طلب خدمة جديد!\n👤 العميل: ${displayName} (${userEmail})\n🛠 الخدمة: ${service.name}\n💰 السعر: ${service.price} ج.م\n🎯 الرقم المطلوب: ${targetNumber}\n📞 واتساب للتواصل: ${whatsappNumber}\n💵 طريقة الدفع: ${paymentMethod === 'orange_cash' ? 'فودافون/أورنج كاش' : 'انستاباي'}\n📱 حساب المحول منه: ${senderPhone}`;
-
-    await fetch('/api/telegram', {
+    fetch('/api/notify', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiSecret}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        message,
+        displayName,
+        userEmail,
+        serviceName: service.name,
+        servicePrice: price,
+        targetNumber,
+        whatsappNumber,
+        paymentMethod,
+        senderPhone,
         receiptImage,
       }),
-    }).catch(err => console.error('Error sending Telegram notification:', err));
+    }).catch(err => console.error('[purchaseService] Failed to call /api/notify:', err));
   } catch (e) {
-    console.error('Error sending Telegram notification:', e);
+    console.error('[purchaseService] Error calling /api/notify:', e);
   }
 };
 

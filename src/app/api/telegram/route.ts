@@ -1,38 +1,38 @@
 import { NextResponse } from 'next/server';
 
+// Internal endpoint called server-to-server during purchase
+// Protected by a shared API secret stored in environment variables
 export async function POST(request: Request) {
   try {
-    // 1. Verify secret API key (simple and reliable - no Firebase Admin needed)
+    // Verify the internal API secret
     const authHeader = request.headers.get('Authorization');
     const apiSecret = process.env.TELEGRAM_API_SECRET;
 
-    if (!apiSecret) {
-      console.error('TELEGRAM_API_SECRET env var is not configured on server.');
-      return NextResponse.json({ error: 'Server misconfiguration: missing API secret' }, { status: 500 });
-    }
-
-    if (!authHeader || authHeader !== `Bearer ${apiSecret}`) {
+    if (!apiSecret || !authHeader || authHeader !== `Bearer ${apiSecret}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 2. Get Telegram credentials from environment variables directly
+    // Get Telegram credentials from environment variables
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
 
     if (!botToken || !chatId) {
-      console.error('Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID env vars.');
-      return NextResponse.json({ error: 'Telegram credentials not configured on server' }, { status: 500 });
+      console.error('[Telegram] Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID env vars.');
+      return NextResponse.json({ error: 'Telegram credentials not configured' }, { status: 500 });
     }
 
-    // 3. Extract request body
-    const { message, receiptImage } = await request.json();
+    // Extract request body
+    const body = await request.json();
+    const { message, receiptImage } = body;
 
     if (!message) {
       return NextResponse.json({ error: 'Missing message content' }, { status: 400 });
     }
 
-    // 4. Send Message / Photo to Telegram API
-    if (receiptImage && receiptImage.startsWith('data:image')) {
+    console.log('[Telegram] Sending notification to chat:', chatId);
+
+    // Send Message / Photo to Telegram API
+    if (receiptImage && typeof receiptImage === 'string' && receiptImage.startsWith('data:image')) {
       const parts = receiptImage.split(',');
       const buffer = Buffer.from(parts[1], 'base64');
       const mimeString = parts[0].split(':')[1].split(';')[0];
@@ -51,31 +51,31 @@ export async function POST(request: Request) {
 
       const telegramData = await telegramRes.json();
       if (telegramRes.ok) {
-        return NextResponse.json({ success: true, data: telegramData });
+        console.log('[Telegram] Photo sent successfully!');
+        return NextResponse.json({ success: true });
       } else {
-        console.error('Telegram sendPhoto failed:', telegramData);
+        console.error('[Telegram] sendPhoto failed:', telegramData);
         return NextResponse.json({ error: 'Telegram photo send failed', details: telegramData }, { status: 500 });
       }
     } else {
+      // Send text only
       const telegramRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: message,
-        }),
+        body: JSON.stringify({ chat_id: chatId, text: message }),
       });
 
       const telegramData = await telegramRes.json();
       if (telegramRes.ok) {
-        return NextResponse.json({ success: true, data: telegramData });
+        console.log('[Telegram] Message sent successfully!');
+        return NextResponse.json({ success: true });
       } else {
-        console.error('Telegram sendMessage failed:', telegramData);
+        console.error('[Telegram] sendMessage failed:', telegramData);
         return NextResponse.json({ error: 'Telegram message send failed', details: telegramData }, { status: 500 });
       }
     }
   } catch (err: any) {
-    console.error('Error in Telegram API route:', err);
+    console.error('[Telegram] Error in route handler:', err);
     return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
   }
 }
