@@ -59,6 +59,9 @@ export default function AdminPage() {
   const [deliveryNote, setDeliveryNote] = useState('');
   const [deliverySaving, setDeliverySaving] = useState(false);
 
+  // Order Search
+  const [orderSearch, setOrderSearch] = useState('');
+
   // Payment Settings State
   const [orangeCashNumber, setOrangeCashNumber] = useState('01201426302');
   const [instaPayNumber, setInstaPayNumber] = useState('01201426302');
@@ -252,7 +255,18 @@ export default function AdminPage() {
   };
 
   const totalBalance = users.reduce((s, u) => s + (u.balance || 0), 0);
-  const purchaseTransactions = transactions.filter(t => t.type === 'purchase');
+  const purchaseTransactions = transactions
+    .filter(t => t.type === 'purchase')
+    .filter(t => {
+      if (!orderSearch.trim()) return true;
+      const q = orderSearch.trim().replace('#', '');
+      return (
+        String(t.orderNumber || '').includes(q) ||
+        (t.displayName || '').includes(orderSearch) ||
+        (t.serviceName || '').includes(orderSearch) ||
+        (t.targetNumber || '').includes(orderSearch)
+      );
+    });
 
   const [resending, setResending] = useState(false);
   const { resendVerification } = useAuth();
@@ -549,6 +563,7 @@ export default function AdminPage() {
                 <table className="data-table">
                   <thead>
                     <tr>
+                      <th>رقم الطلب</th>
                       <th>العميل</th>
                       <th>الخدمة المطلوبة</th>
                       <th>الرقم المطلوب</th>
@@ -564,6 +579,13 @@ export default function AdminPage() {
                   <tbody>
                     {purchaseTransactions.map(tx => (
                       <tr key={tx.id}>
+                        <td>
+                          {tx.orderNumber ? (
+                            <span style={{ background: 'rgba(226,201,126,0.12)', color: 'var(--gold)', border: '1px solid rgba(226,201,126,0.3)', padding: '4px 10px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                              #{tx.orderNumber}
+                            </span>
+                          ) : <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>-</span>}
+                        </td>
                         <td>
                           <div style={{ fontWeight: 600 }}>{tx.displayName || 'مستخدم'}</div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{tx.userEmail}</div>

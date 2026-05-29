@@ -108,6 +108,19 @@ export interface TransactionRecord {
   createdAt: any;
 }
 
+// =================== ORDER NUMBER COUNTER ===================
+export const getNextOrderNumber = async (): Promise<number> => {
+  const counterRef = doc(db, 'settings', 'orderCounter');
+  // Atomically increment the counter and get the new value
+  await updateDoc(counterRef, { count: increment(1) }).catch(async () => {
+    // If doc doesn't exist yet, create it starting at 1000
+    const { setDoc } = await import('firebase/firestore');
+    await setDoc(counterRef, { count: 1000 });
+  });
+  const snap = await getDoc(counterRef);
+  return snap.data()?.count ?? 1000;
+};
+
 export const purchaseService = async (
   uid: string,
   userEmail: string,
@@ -127,6 +140,9 @@ export const purchaseService = async (
     price = service.resellerPrice ?? service.price;
   }
 
+  // Get next order number atomically
+  const orderNumber = await getNextOrderNumber();
+
   await addDoc(collection(db, 'transactions'), {
     userId: uid,
     userEmail,
@@ -141,6 +157,7 @@ export const purchaseService = async (
     receiptImage,
     paymentMethod,
     status: 'pending',
+    orderNumber,
     note: `شراء خدمة: ${service.name} (دفع مباشر)`,
     createdAt: serverTimestamp(),
   });
@@ -151,6 +168,7 @@ export const purchaseService = async (
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        orderNumber,
         displayName,
         userEmail,
         serviceName: service.name,

@@ -15,9 +15,10 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { displayName, userEmail, serviceName, servicePrice, targetNumber, whatsappNumber, paymentMethod, senderPhone, receiptImage } = body;
+    const { orderNumber, displayName, userEmail, serviceName, servicePrice, targetNumber, whatsappNumber, paymentMethod, senderPhone, receiptImage } = body;
 
-    const message = `🔔 طلب خدمة جديد!\n👤 العميل: ${displayName} (${userEmail})\n🛠 الخدمة: ${serviceName}\n💰 السعر: ${servicePrice} ج.م\n🎯 الرقم المطلوب: ${targetNumber}\n📞 واتساب للتواصل: ${whatsappNumber}\n💵 طريقة الدفع: ${paymentMethod === 'orange_cash' ? 'فودافون/أورنج كاش' : 'انستاباي'}\n📱 حساب المحول منه: ${senderPhone}`;
+    const orderTag = orderNumber ? `#${orderNumber}` : '';
+    const message = `🔔 طلب خدمة جديد! ${orderTag}\n👤 العميل: ${displayName} (${userEmail})\n🛠 الخدمة: ${serviceName}\n💰 السعر: ${servicePrice} ج.م\n🎯 الرقم المطلوب: ${targetNumber}\n📞 واتساب للتواصل: ${whatsappNumber}\n💵 طريقة الدفع: ${paymentMethod === 'orange_cash' ? 'فودافون/أورنج كاش' : 'انستاباي'}\n📱 حساب المحول منه: ${senderPhone}`;
 
     console.log('[notify] Sending Telegram notification for:', serviceName);
 
