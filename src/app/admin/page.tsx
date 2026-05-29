@@ -57,6 +57,7 @@ export default function AdminPage() {
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [deliveryTx, setDeliveryTx] = useState<any>(null);
   const [deliveryNote, setDeliveryNote] = useState('');
+  const [deliveryImage, setDeliveryImage] = useState('');
   const [deliverySaving, setDeliverySaving] = useState(false);
 
   // Order Search
@@ -238,14 +239,15 @@ export default function AdminPage() {
   // ---- Deliver Service ----
   const handleDeliver = async () => {
     if (!deliveryTx) return;
-    if (!deliveryNote.trim()) return toast.error('من فضلك اكتب بيانات التسليم');
+    if (!deliveryNote.trim() && !deliveryImage) return toast.error('من فضلك اكتب بيانات التسليم أو ارفق صورة');
     setDeliverySaving(true);
     try {
-      await deliverService(deliveryTx.id, deliveryNote.trim());
+      await deliverService(deliveryTx.id, deliveryNote.trim(), deliveryImage || undefined);
       toast.success(`✅ تم تسليم الخدمة لـ ${deliveryTx.displayName || 'العميل'} بنجاح!`);
       setShowDeliveryModal(false);
       setDeliveryTx(null);
       setDeliveryNote('');
+      setDeliveryImage('');
       await loadData();
     } catch {
       toast.error('حدث خطأ أثناء التسليم');
@@ -966,19 +968,63 @@ export default function AdminPage() {
             </div>
 
             {/* Delivery Note Input */}
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '10px', display: 'block', fontWeight: 600 }}>
-                بيانات التسليم (ستظهر للعميل في لوحته) *
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block', fontWeight: 600 }}>
+                بيانات التسليم (اختياري)
               </label>
               <textarea
                 className="input-gold"
                 placeholder={"مثال:\nالاسم: محمد أحمد\nرقم الهوية: 29901011234567\nتاريخ الميلاد: 1999/01/01"}
                 value={deliveryNote}
                 onChange={e => setDeliveryNote(e.target.value)}
-                rows={6}
+                rows={4}
                 style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.7 }}
               />
             </div>
+
+            {/* Delivery Image Upload */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block', fontWeight: 600 }}>
+                صورة التسليم (اختياري)
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > 2 * 1024 * 1024) {
+                    toast.error('حجم الصورة كبير جداً، الحد الأقصى 2 ميجابايت');
+                    return;
+                  }
+                  const reader = new FileReader();
+                  reader.onloadend = () => setDeliveryImage(reader.result as string);
+                  reader.readAsDataURL(file);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '10px',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                }}
+              />
+              {deliveryImage && (
+                <div style={{ marginTop: '10px', position: 'relative' }}>
+                  <img src={deliveryImage} alt="معاينة صورة التسليم" style={{ width: '100%', maxHeight: '180px', objectFit: 'contain', borderRadius: '10px', border: '1px solid var(--border)' }} />
+                  <button
+                    onClick={() => setDeliveryImage('')}
+                    style={{ position: 'absolute', top: '6px', left: '6px', background: 'rgba(0,0,0,0.7)', border: 'none', color: 'white', borderRadius: '50%', width: '28px', height: '28px', cursor: 'pointer', fontSize: '1rem' }}
+                  >×</button>
+                </div>
+              )}
+            </div>
+
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '14px', textAlign: 'center' }}>
+              * يجب كتابة نص أو إرفاق صورة على الأقل
+            </p>
 
             <div style={{ display: 'flex', gap: '12px' }}>
               <button

@@ -218,14 +218,16 @@ export const updateOrderStatus = async (txId: string, status: 'pending' | 'in_pr
   }
 };
 
-// Deliver a service result to the client (saves delivery note + marks completed + notifies client)
-export const deliverService = async (txId: string, deliveryNote: string) => {
-  // 1. Save delivery note and mark as completed
-  await updateDoc(doc(db, 'transactions', txId), {
-    deliveryNote,
+// Deliver a service result to the client (saves delivery note/image + marks completed + notifies client)
+export const deliverService = async (txId: string, deliveryNote: string, deliveryImage?: string) => {
+  const updateData: any = {
     status: 'completed',
     deliveredAt: serverTimestamp(),
-  });
+  };
+  if (deliveryNote) updateData.deliveryNote = deliveryNote;
+  if (deliveryImage) updateData.deliveryImage = deliveryImage;
+
+  await updateDoc(doc(db, 'transactions', txId), updateData);
 
   // 2. Fetch transaction to get userId and serviceName
   try {

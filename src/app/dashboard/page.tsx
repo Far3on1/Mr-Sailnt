@@ -537,7 +537,7 @@ export default function Dashboard() {
                                   رقم المستهدف: {tx.targetNumber} | واتساب: {tx.whatsappNumber}
                                 </div>
                               )}
-                              {tx.deliveryNote && (
+                              {(tx.deliveryNote || tx.deliveryImage) && (
                                 <div style={{
                                   marginTop: '10px',
                                   background: 'rgba(34,197,94,0.08)',
@@ -551,7 +551,14 @@ export default function Dashboard() {
                                   lineHeight: 1.8,
                                 }}>
                                   <div style={{ fontWeight: 700, marginBottom: '6px', color: '#22c55e' }}>📦 بيانات التسليم:</div>
-                                  {tx.deliveryNote}
+                                  {tx.deliveryNote && <div>{tx.deliveryNote}</div>}
+                                  {tx.deliveryImage && (
+                                    <img
+                                      src={tx.deliveryImage}
+                                      alt="صورة التسليم"
+                                      style={{ marginTop: '8px', width: '100%', maxHeight: '300px', objectFit: 'contain', borderRadius: '8px', border: '1px solid rgba(34,197,94,0.3)' }}
+                                    />
+                                  )}
                                 </div>
                               )}
                             </td>
