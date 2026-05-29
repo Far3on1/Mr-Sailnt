@@ -993,13 +993,26 @@ export default function AdminPage() {
                 onChange={e => {
                   const file = e.target.files?.[0];
                   if (!file) return;
-                  if (file.size > 2 * 1024 * 1024) {
-                    toast.error('حجم الصورة كبير جداً، الحد الأقصى 2 ميجابايت');
-                    return;
-                  }
-                  const reader = new FileReader();
-                  reader.onloadend = () => setDeliveryImage(reader.result as string);
-                  reader.readAsDataURL(file);
+                  // Compress image using canvas
+                  const img = new Image();
+                  const url = URL.createObjectURL(file);
+                  img.onload = () => {
+                    const maxW = 1200;
+                    const maxH = 1200;
+                    let w = img.width;
+                    let h = img.height;
+                    if (w > maxW) { h = (maxW / w) * h; w = maxW; }
+                    if (h > maxH) { w = (maxH / h) * w; h = maxH; }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d')!;
+                    ctx.drawImage(img, 0, 0, w, h);
+                    const compressed = canvas.toDataURL('image/jpeg', 0.7);
+                    setDeliveryImage(compressed);
+                    URL.revokeObjectURL(url);
+                  };
+                  img.src = url;
                 }}
                 style={{
                   width: '100%',

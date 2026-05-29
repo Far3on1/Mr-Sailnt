@@ -192,15 +192,26 @@ export default function Dashboard() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('حجم الصورة كبير جداً، الحد الأقصى هو 2 ميجابايت');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setDepositReceipt(reader.result as string);
+    // Compress image using canvas
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const maxW = 1200;
+      const maxH = 1200;
+      let w = img.width;
+      let h = img.height;
+      if (w > maxW) { h = (maxW / w) * h; w = maxW; }
+      if (h > maxH) { w = (maxH / h) * w; h = maxH; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.7);
+      setDepositReceipt(compressed);
+      URL.revokeObjectURL(url);
     };
-    reader.readAsDataURL(file);
+    img.src = url;
   };
 
   const handleDepositSubmit = async (e: React.FormEvent) => {
