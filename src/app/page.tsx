@@ -210,39 +210,111 @@ export default function Home() {
       }} />
 
       {/* NAVBAR */}
-      <nav className="navbar">
-        <Link href="/" style={{ textDecoration: 'none' }}>
-          <div className="navbar-logo">Mr Sailnt</div>
-        </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {user ? (
-            <>
-              <Link href="/" style={{ textDecoration: 'none' }}>
-                <button className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>الرئيسية</button>
-              </Link>
-              <Link href="/dashboard" style={{ textDecoration: 'none' }}>
-                <button className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>سجل المعاملات</button>
-              </Link>
-              {isAdmin && (
-                <Link href="/admin" style={{ textDecoration: 'none' }}>
-                  <button className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem', color: 'var(--gold)', borderColor: 'var(--border)' }}>لوحة الأدمن</button>
-                </Link>
-              )}
-              <button
-                onClick={handleLogout}
-                className="btn-outline"
-                style={{ padding: '6px 10px', fontSize: '0.8rem', color: '#f87171', borderColor: 'rgba(248,113,113,0.15)' }}
-              >
-                خروج
-              </button>
-            </>
-          ) : (
+      <nav className="navbar" style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '14px 24px' }}>
+        {/* Right side (RTL start) - Hamburger */}
+        <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+          {user && (
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
+            >
+              <span style={{ fontSize: '1.8rem' }}>☰</span>
+            </button>
+          )}
+        </div>
+
+        {/* Center - Logo */}
+        <div style={{ textAlign: 'center' }}>
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <div className="navbar-logo" style={{ margin: 0 }}>Mr Sailnt</div>
+          </Link>
+        </div>
+
+        {/* Left side - Login/Signup */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          {!user && (
             <Link href="/auth" style={{ textDecoration: 'none' }}>
-              <button className="btn-gold" style={{ padding: '10px 20px', fontSize: '0.9rem' }}>دخول / تسجيل</button>
+              <button className="btn-gold" style={{ padding: '8px 16px', fontSize: '0.85rem' }}>دخول / تسجيل</button>
             </Link>
           )}
         </div>
       </nav>
+
+      {/* SIDEBAR OVERLAY */}
+      {menuOpen && (
+        <div
+          onClick={() => setMenuOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 2000, backdropFilter: 'blur(2px)' }}
+        />
+      )}
+
+      {/* SIDEBAR */}
+      <div className={`sidebar ${menuOpen ? 'show' : ''}`} style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <div className="navbar-logo" style={{ fontSize: '1.4rem', padding: '0 8px' }}>Mr Sailnt</div>
+          <button className="mobile-close" onClick={() => setMenuOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
+        </div>
+
+        {/* Navigation links at the top */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <Link href="/" className="sidebar-item active" style={{ textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
+            <HomeIcon size={18} /> الرئيسية
+          </Link>
+
+          <Link href="/dashboard" className="sidebar-item" style={{ textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
+            <Clock size={18} /> سجل المعاملات
+          </Link>
+
+          {isAdmin && (
+            <Link href="/admin" className="sidebar-item" style={{ textDecoration: 'none', color: 'var(--gold)' }} onClick={() => setMenuOpen(false)}>
+              <Star size={18} /> لوحة الأدمن
+            </Link>
+          )}
+        </div>
+
+        {/* Middle: Contact methods */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '12px', padding: '24px 8px' }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '4px', paddingRight: '8px', fontWeight: 600 }}>طرق التواصل والدعم:</div>
+          <a href="https://wa.me/201201426302" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'var(--text-secondary)', fontSize: '0.85rem', paddingRight: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            💬 واتساب: 01201426302
+          </a>
+          <a href="https://t.me/Mr_Silent999" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'var(--text-secondary)', fontSize: '0.85rem', paddingRight: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            ✈️ تليجرام الشخصي
+          </a>
+          <a href="https://t.me/MrSailnt_Bot" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'var(--gold)', fontSize: '0.85rem', paddingRight: '8px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
+            🤖 بوت الخدمات: @MrSailnt_Bot
+          </a>
+        </div>
+
+        {/* Bottom: Account Info and Logout */}
+        {user && (
+          <div style={{ padding: '16px 8px 4px', borderTop: '1px solid var(--border)', marginTop: 'auto' }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {userData?.displayName || 'مستخدم'}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {user.email}
+            </div>
+            <button 
+              onClick={handleLogout}
+              style={{ 
+                width: '100%', 
+                background: 'none', 
+                border: 'none', 
+                color: '#f87171', 
+                cursor: 'pointer', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px', 
+                fontSize: '0.85rem', 
+                padding: '8px 0' 
+              }}
+            >
+              <LogOut size={16} /> تسجيل الخروج
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* HERO */}
       <section style={{ padding: '120px 20px 60px', maxWidth: '900px', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
