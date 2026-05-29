@@ -452,10 +452,23 @@ input:checked + .toggle-slider::before { transform: translateX(-24px); }
   color: var(--gold);
 }
 
+.desktop-only {
+  display: flex !important;
+}
+.mobile-only {
+  display: none !important;
+}
+
 /* ======== MOBILE RESPONSIVENESS MEDIA QUERIES ======== */
 
 /* Tablet and below */
 @media (max-width: 900px) {
+  .desktop-only {
+    display: none !important;
+  }
+  .mobile-only {
+    display: flex !important;
+  }
   .sidebar {
     position: fixed !important;
     top: 0;

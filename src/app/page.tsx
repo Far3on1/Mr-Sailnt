@@ -203,12 +203,28 @@ export default function Home() {
         <div className="navbar-logo">Mr Sailnt</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {user ? (
-            <button
-              onClick={() => setMenuOpen(true)}
-              style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
-            >
-              <span style={{ fontSize: '1.8rem', lineHeight: 1 }}>☰</span>
-            </button>
+            <>
+              {/* Desktop links - hidden on mobile */}
+              <div className="desktop-only" style={{ gap: '12px', alignItems: 'center' }}>
+                <Link href="/dashboard" style={{ textDecoration: 'none' }}>
+                  <button className="btn-outline" style={{ padding: '8px 16px', fontSize: '0.9rem' }}>سجل المعاملات</button>
+                </Link>
+                {isAdmin && (
+                  <Link href="/admin" style={{ textDecoration: 'none' }}>
+                    <button className="btn-outline" style={{ padding: '8px 16px', fontSize: '0.9rem', color: 'var(--gold)', borderColor: 'var(--border)' }}>لوحة الأدمن</button>
+                  </Link>
+                )}
+              </div>
+              {/* Mobile hamburger - hidden on desktop */}
+              <div className="mobile-only">
+                <button
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                >
+                  <span style={{ fontSize: '1.8rem' }}>☰</span>
+                </button>
+              </div>
+            </>
           ) : (
             <Link href="/auth" style={{ textDecoration: 'none' }}>
               <button className="btn-gold" style={{ padding: '10px 20px', fontSize: '0.9rem' }}>دخول / تسجيل</button>
