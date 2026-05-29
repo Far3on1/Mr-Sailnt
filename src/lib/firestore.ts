@@ -145,37 +145,23 @@ export const purchaseService = async (
     createdAt: serverTimestamp(),
   });
 
-  // Send Telegram Notification to Admin via serverless route handler (bypasses CORS)
+  // Send Telegram Notification to Admin via serverless route handler
   try {
-    try {
-      const userInstance = auth.currentUser;
-      const token = userInstance ? await userInstance.getIdToken() : '';
+    const apiSecret = process.env.NEXT_PUBLIC_TELEGRAM_API_SECRET || '';
 
-      const message = `🔔 طلب خدمة جديد!
-👤 العميل: ${displayName} (${userEmail})
-🛠 الخدمة: ${service.name}
-💰 السعر: ${service.price} ج.م
-🎯 الرقم المطلوب: ${targetNumber}
-📞 واتساب للتواصل: ${whatsappNumber}
-💵 طريقة الدفع: ${paymentMethod === 'orange_cash' ? 'فودافون/أورنج كاش' : 'انستاباي'}
-📱 حساب المحول منه: ${senderPhone}`;
+    const message = `🔔 طلب خدمة جديد!\n👤 العميل: ${displayName} (${userEmail})\n🛠 الخدمة: ${service.name}\n💰 السعر: ${service.price} ج.م\n🎯 الرقم المطلوب: ${targetNumber}\n📞 واتساب للتواصل: ${whatsappNumber}\n💵 طريقة الدفع: ${paymentMethod === 'orange_cash' ? 'فودافون/أورنج كاش' : 'انستاباي'}\n📱 حساب المحول منه: ${senderPhone}`;
 
-      await fetch('/api/telegram', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          message: message,
-          receiptImage: receiptImage,
-        }),
-      });
-    } catch (err) {
-      console.error('Error sending Telegram notification proxy request:', err);
-    }
-
-
+    await fetch('/api/telegram', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiSecret}`
+      },
+      body: JSON.stringify({
+        message,
+        receiptImage,
+      }),
+    }).catch(err => console.error('Error sending Telegram notification:', err));
   } catch (e) {
     console.error('Error sending Telegram notification:', e);
   }
