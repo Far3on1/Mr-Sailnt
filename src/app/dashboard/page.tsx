@@ -524,7 +524,14 @@ export default function Dashboard() {
                               }
                             </td>
                             <td>
-                              <div>{tx.note}</div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                {tx.orderNumber && (
+                                  <span style={{ background: 'rgba(226,201,126,0.12)', color: 'var(--gold)', border: '1px solid rgba(226,201,126,0.3)', padding: '2px 8px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 700 }}>
+                                    #{tx.orderNumber}
+                                  </span>
+                                )}
+                                <span>{tx.note}</span>
+                              </div>
                               {tx.targetNumber && (
                                 <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
                                   رقم المستهدف: {tx.targetNumber} | واتساب: {tx.whatsappNumber}

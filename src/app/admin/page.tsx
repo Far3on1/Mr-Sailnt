@@ -556,6 +556,18 @@ export default function AdminPage() {
         {/* ===== ORDERS ===== */}
         {tab === 'orders' && (
           <div>
+            <div style={{ marginBottom: '16px', display: 'flex', gap: '12px' }}>
+              <input
+                className="input-gold"
+                placeholder="ابحث برقم الطلب (#1001) أو اسم العميل أو الخدمة..."
+                value={orderSearch}
+                onChange={e => setOrderSearch(e.target.value)}
+                style={{ flex: 1, padding: '10px 16px', fontSize: '0.9rem' }}
+              />
+              {orderSearch && (
+                <button onClick={() => setOrderSearch('')} className="btn-outline" style={{ padding: '10px 16px' }}>مسح</button>
+              )}
+            </div>
             {loading ? (
               <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}><div className="spinner" /></div>
             ) : (
