@@ -43,7 +43,7 @@ const matchesCategory = (service: Service, categoryKey: string | null) => {
     return sCat === 'we' || sName.includes('we') || sName.split(/\s+/).includes('وي') || sName.includes('المصرية للاتصالات');
   }
   if (categoryKey === 'civil') {
-    return sCat === 'civil' || sName.includes('سجل') || sName.includes('الرقم القومي') || sName.includes('تموين');
+    return sCat === 'civil' || sName.includes('سجل مدني') || sName.includes('الرقم القومي') || sName.includes('تموين');
   }
   return sCat === categoryKey;
 };
