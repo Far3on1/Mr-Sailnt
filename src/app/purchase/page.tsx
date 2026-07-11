@@ -8,7 +8,7 @@ import { ArrowRight, Wallet, Copy, Check, Upload, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 function PurchaseContent() {
-  const { user, userData } = useAuth();
+  const { user, userData, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const serviceId = searchParams.get('id');
@@ -63,11 +63,11 @@ function PurchaseContent() {
 
   // Protect page: Redirect to auth if not logged in
   useEffect(() => {
-    if (user === null) {
+    if (!loading && user === null) {
       toast.error('يرجى تسجيل الدخول أولاً لإتمام عملية الشراء');
       router.push(`/auth?redirect=/purchase?id=${serviceId}`);
     }
-  }, [user, router, serviceId]);
+  }, [user, loading, router, serviceId]);
 
   const handleCopyNumber = () => {
     const num = depositMethod === 'orange_cash' ? paymentSettings.orangeCashNumber : paymentSettings.instaPayNumber;
@@ -136,7 +136,7 @@ function PurchaseContent() {
     }
   };
 
-  if (loadingService || !user) {
+  if (loading || loadingService || !user) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
         <Loader2 className="animate-spin" size={40} style={{ color: 'var(--gold)', marginBottom: '16px' }} />
