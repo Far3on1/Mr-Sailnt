@@ -187,7 +187,7 @@ body {
   justify-content: space-between;
 }
 .navbar-logo {
-  font-size: 1.5rem;
+  font-size: 2.4rem;
   font-weight: 800;
   background: linear-gradient(135deg, var(--gold-dark), var(--gold-light));
   -webkit-background-clip: text;
@@ -600,7 +600,7 @@ div[style*="marginRight: '260px'"] {
   }
 
   .navbar-logo {
-    font-size: 1.1rem !important;
+    font-size: 1.85rem !important;
   }
 
   /* ---- Hero ---- */
