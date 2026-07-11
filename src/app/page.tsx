@@ -62,7 +62,7 @@ export default function Home() {
   };
 
   const triggerBuyFlow = (service: Service) => {
-    router.push(`/purchase?id=${service.id}`);
+    window.open(`/purchase?id=${service.id}`, '_blank');
   };
 
 
@@ -176,12 +176,12 @@ export default function Home() {
             <HomeIcon size={18} /> الرئيسية
           </Link>
 
-          <Link href="/dashboard" className="sidebar-item" style={{ textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
+          <Link href="/dashboard" target="_blank" className="sidebar-item" style={{ textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
             <Clock size={18} /> سجل المعاملات
           </Link>
 
           {isAdmin && (
-            <Link href="/admin" className="sidebar-item" style={{ textDecoration: 'none', color: 'var(--gold)' }} onClick={() => setMenuOpen(false)}>
+            <Link href="/admin" target="_blank" className="sidebar-item" style={{ textDecoration: 'none', color: 'var(--gold)' }} onClick={() => setMenuOpen(false)}>
               <Star size={18} /> لوحة الأدمن
             </Link>
           )}

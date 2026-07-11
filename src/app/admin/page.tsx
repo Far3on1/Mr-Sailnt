@@ -388,11 +388,11 @@ export default function AdminPage() {
 
         {/* Navigation links at the top */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <Link href="/" className="sidebar-item" style={{ textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
+          <Link href="/" target="_blank" className="sidebar-item" style={{ textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
             <Home size={18} /> الرئيسية
           </Link>
 
-          <Link href="/dashboard" className="sidebar-item" style={{ textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
+          <Link href="/dashboard" target="_blank" className="sidebar-item" style={{ textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
             <Clock size={18} /> سجل المعاملات
           </Link>
 

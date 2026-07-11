@@ -378,7 +378,7 @@ export default function Dashboard() {
 
         {/* Navigation links at the top */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <Link href="/" className="sidebar-item" style={{ textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
+          <Link href="/" target="_blank" className="sidebar-item" style={{ textDecoration: 'none' }} onClick={() => setMenuOpen(false)}>
             <Home size={18} /> الرئيسية
           </Link>
 
@@ -387,7 +387,7 @@ export default function Dashboard() {
           </Link>
 
           {isAdmin && (
-            <Link href="/admin" className="sidebar-item" style={{ textDecoration: 'none', color: 'var(--gold)' }} onClick={() => setMenuOpen(false)}>
+            <Link href="/admin" target="_blank" className="sidebar-item" style={{ textDecoration: 'none', color: 'var(--gold)' }} onClick={() => setMenuOpen(false)}>
               <Star size={18} /> لوحة الأدمن
             </Link>
           )}
