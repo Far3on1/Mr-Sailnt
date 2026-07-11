@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { getServices, Service, purchaseService, getPaymentSettings, PaymentSettings } from '@/lib/firestore';
+import { getServices, Service } from '@/lib/firestore';
 import { Menu, X, Star, Zap, Shield, ChevronLeft, Wallet, Home as HomeIcon, Clock, LogOut } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -17,19 +17,8 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
-  // Order Modal States
-  const [showOrderModal, setShowOrderModal] = useState(false);
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [targetNumber, setTargetNumber] = useState('');
-  const [whatsappNumber, setWhatsappNumber] = useState('');
-  const [depositSender, setDepositSender] = useState('');
-  const [depositReceipt, setDepositReceipt] = useState('');
-  const [depositMethod, setDepositMethod] = useState<'orange_cash' | 'instapay'>('orange_cash');
+  // Navigation
   const [buying, setBuying] = useState<string | null>(null);
-  const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
-    orangeCashNumber: '01201426302',
-    instaPayNumber: '01201426302'
-  });
 
   const handleLogout = async () => {
     try {
@@ -40,11 +29,7 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    getPaymentSettings()
-      .then(setPaymentSettings)
-      .catch(() => console.error('Failed to load payment settings'));
-  }, []);
+  // Loaded on load
 
   useEffect(() => {
     setMounted(true);
@@ -77,77 +62,7 @@ export default function Home() {
   };
 
   const triggerBuyFlow = (service: Service) => {
-    setSelectedService(service);
-    setTargetNumber('');
-    setWhatsappNumber('');
-    setDepositSender('');
-    setDepositReceipt('');
-    setShowOrderModal(true);
-  };
-
-  const handleCopyNumber = () => {
-    const num = depositMethod === 'orange_cash' ? paymentSettings.orangeCashNumber : paymentSettings.instaPayNumber;
-    navigator.clipboard.writeText(num);
-    toast.success('تم نسخ رقم/عنوان التحويل بنجاح 📋');
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      const maxW = 800;
-      const maxH = 800;
-      let w = img.width;
-      let h = img.height;
-      if (w > maxW) { h = (maxW / w) * h; w = maxW; }
-      if (h > maxH) { w = (maxH / h) * w; h = maxH; }
-      const canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext('2d')!;
-      ctx.drawImage(img, 0, 0, w, h);
-      const compressed = canvas.toDataURL('image/jpeg', 0.5);
-      setDepositReceipt(compressed);
-      URL.revokeObjectURL(url);
-    };
-    img.src = url;
-  };
-
-  const handleBuy = async () => {
-    if (!user || !selectedService) return;
-    if (!targetNumber.trim()) return toast.error('يرجى كتابة الرقم المطلوب');
-    if (!whatsappNumber.trim()) return toast.error('يرجى كتابة رقم الواتساب');
-    if (!depositSender.trim()) return toast.error('يرجى كتابة رقم/حساب المحول منه');
-    if (!depositReceipt) return toast.error('يرجى إرفاق صورة إثبات التحويل');
-
-    const isNationalIdService = selectedService.name.includes('الرقم القومي') || selectedService.name.includes('تموين') || selectedService.category === 'civil';
-    if (isNationalIdService && !/^\d{14}$/.test(targetNumber.trim())) {
-      return toast.error('يجب أن يتكون الرقم القومي من 14 رقم بالضبط');
-    }
-
-    setBuying(selectedService.id);
-    setShowOrderModal(false);
-    try {
-      await purchaseService(
-        user.uid,
-        user.email || '',
-        userData?.displayName || 'مستخدم',
-        selectedService,
-        targetNumber,
-        whatsappNumber,
-        depositSender,
-        depositReceipt,
-        depositMethod,
-        userData?.tier || 'normal'
-      );
-      toast.success(`تم إرسال طلب "${selectedService.name}" بنجاح! قيد المراجعة حالياً ⏳`);
-    } catch (err: any) {
-      toast.error(err.message || 'حدث خطأ');
-    } finally {
-      setBuying(null);
-    }
+    router.push(`/purchase?id=${service.id}`);
   };
 
 
@@ -496,141 +411,7 @@ export default function Home() {
         <p>© 2025 جميع الحقوق محفوظة لـ <span dir="ltr">Mr Sailnt</span></p>
       </footer>
 
-      {/* ===== ORDER MODAL ===== */}
-      {showOrderModal && selectedService && (
-        <div className="modal-overlay" onClick={() => setShowOrderModal(false)}>
-          <div className="modal-box animate-scale-up" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                طلب خدمة: <span style={{ color: 'var(--gold)' }}>{selectedService.name}</span>
-              </h2>
-              <button 
-                onClick={() => setShowOrderModal(false)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}
-              >
-                ×
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: '10px', marginBottom: '20px', fontSize: '0.9rem' }}>
-              <div style={{ color: 'var(--text-secondary)' }}>سعر الخدمة:</div>
-              <div style={{ fontWeight: 800 }}>
-                <span style={{ color: 'var(--gold)' }}>{
-                  userData?.tier === 'vip' && selectedService.vipPrice ? selectedService.vipPrice :
-                  userData?.tier === 'reseller' && selectedService.resellerPrice ? selectedService.resellerPrice :
-                  selectedService.price
-                } ج.م</span>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {(() => {
-                const isNationalId = selectedService.name.includes('الرقم القومي') || selectedService.name.includes('تموين') || selectedService.category === 'civil';
-                return (
-                  <div>
-                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
-                      {isNationalId ? 'الرقم القومي المراد الاستعلام عنه (14 رقم) *' : 'رقم الهاتف المراد سحب بياناته *'}
-                    </label>
-                    <input
-                      className="input-gold"
-                      type="text"
-                      placeholder={isNationalId ? 'مثال: 2991201xxxxxxxx' : 'مثال: 01xxxxxxxxx'}
-                      value={targetNumber}
-                      onChange={e => setTargetNumber(e.target.value)}
-                    />
-                  </div>
-                );
-              })()}
-
-              <div>
-                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
-                  رقم الواتساب الخاص بك للتواصل *
-                </label>
-                <input
-                  className="input-gold"
-                  type="text"
-                  placeholder="مثال: 01xxxxxxxxx"
-                  value={whatsappNumber}
-                  onChange={e => setWhatsappNumber(e.target.value)}
-                />
-              </div>
-
-              {/* Payment Details */}
-              <div style={{ marginTop: '8px', padding: '16px', background: 'rgba(226,201,126,0.02)', border: '1px dashed var(--border)', borderRadius: '12px' }}>
-                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--gold)', marginBottom: '12px' }}>تفاصيل الدفع وتحويل المبلغ:</div>
-                
-                {/* Method selector inside modal */}
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-                  <button 
-                    type="button" 
-                    className={depositMethod === 'orange_cash' ? 'btn-gold' : 'btn-outline'} 
-                    onClick={() => setDepositMethod('orange_cash')}
-                    style={{ flex: 1, padding: '8px', fontSize: '0.8rem', borderRadius: '8px' }}
-                  >
-                    أورنج / فودافون كاش
-                  </button>
-                  <button 
-                    type="button" 
-                    className={depositMethod === 'instapay' ? 'btn-gold' : 'btn-outline'} 
-                    onClick={() => setDepositMethod('instapay')}
-                    style={{ flex: 1, padding: '8px', fontSize: '0.8rem', borderRadius: '8px' }}
-                  >
-                    انستاباي InstaPay
-                  </button>
-                </div>
-
-                {/* Transfer destination details */}
-                <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>التحويل إلى:</div>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--gold)', marginTop: '2px' }}>
-                      {depositMethod === 'orange_cash' ? paymentSettings.orangeCashNumber : paymentSettings.instaPayNumber}
-                    </div>
-                  </div>
-                  <button type="button" className="btn-gold" onClick={handleCopyNumber} style={{ padding: '4px 12px', fontSize: '0.75rem', borderRadius: '6px' }}>
-                    نسخ
-                  </button>
-                </div>
-
-                {/* Sender Wallet/Account Input */}
-                <div style={{ marginBottom: '14px' }}>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
-                    {depositMethod === 'orange_cash' ? 'رقم المحفظة المحول منها *' : 'اسم حساب انستاباي / رقم المحفظة المحول منها *'}
-                  </label>
-                  <input
-                    className="input-gold"
-                    type="text"
-                    placeholder={depositMethod === 'orange_cash' ? 'مثال: 01xxxxxxxxx' : 'مثال: username@instapay'}
-                    value={depositSender}
-                    onChange={e => setDepositSender(e.target.value)}
-                    style={{ padding: '8px 12px', fontSize: '0.85rem' }}
-                  />
-                </div>
-
-                {/* Screenshot upload */}
-                <div>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>صورة إثبات التحويل (الرسالة أو الإسكرين شوت) *</label>
-                  <input className="input-gold" type="file" accept="image/*" onChange={handleFileChange} style={{ fontSize: '0.8rem', padding: '8px' }} />
-                  {depositReceipt && (
-                    <div style={{ marginTop: '8px', textAlign: 'center', border: '1px solid var(--border)', borderRadius: '8px', padding: '6px', background: 'rgba(0,0,0,0.3)' }}>
-                      <img src={depositReceipt} alt="Receipt preview" style={{ maxWidth: '100%', maxHeight: '120px', borderRadius: '6px', objectFit: 'contain' }} />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-                <button className="btn-gold" onClick={handleBuy} disabled={!!buying} style={{ flex: 1 }}>
-                  {buying ? 'جاري الطلب...' : 'تأكيد الشراء والطلب'}
-                </button>
-                <button className="btn-outline" onClick={() => setShowOrderModal(false)} style={{ flex: 1 }}>
-                  إلغاء
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ===== ORDER MODAL REMOVED ===== */}
     </div>
   );
 }
