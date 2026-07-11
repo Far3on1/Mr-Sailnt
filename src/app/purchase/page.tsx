@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { getServices, Service, purchaseService, getPaymentSettings, PaymentSettings } from '@/lib/firestore';
-import { ArrowRight, Wallet, Copy, Check, Upload, Loader2 } from 'lucide-react';
+import { Wallet, Copy, Check, Upload, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 function PurchaseContent() {
@@ -173,30 +173,7 @@ function PurchaseContent() {
 
       <div style={{ maxWidth: '600px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
         
-        {/* Header Back Link */}
-        <div style={{ marginBottom: '24px' }}>
-          <button 
-            onClick={() => router.back()}
-            style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: '8px', 
-              background: 'none', 
-              border: 'none', 
-              color: 'var(--text-secondary)', 
-              cursor: 'pointer',
-              fontSize: '0.9rem',
-              fontWeight: 500,
-              padding: '8px 0',
-              transition: 'color 0.2s',
-              fontFamily: 'var(--font-tajawal), sans-serif'
-            }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--gold)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
-          >
-            <ArrowRight size={18} /> العودة للموقع
-          </button>
-        </div>
+
 
         {/* Purchase Card */}
         <div className="premium-card" style={{ padding: '32px' }}>
